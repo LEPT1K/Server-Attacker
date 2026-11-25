@@ -9,7 +9,13 @@ else:
 
 class Config:
     BASE_DIR = _BASE_DIR
-    OUTPUT_DIR = BASE_DIR / "data" / "snapshots"
+    DATA_DIR = BASE_DIR / "data"
+    OUTPUT_DIR = DATA_DIR / "snapshots"
+
+    # 🔹 Графовый кэш и EPSS (Этап 1 интеграции) 🔹
+    GRAPH_CACHE_FILE = DATA_DIR / "graph_cache.sqlite"
+    EPSS_URL = "https://epss.empiricalsecurity.com/epss_scores-current.csv.gz"
+    SNAPSHOT_MAX_AGE_DAYS = 30  # старше — кэш считается устаревшим
     
     # 🔹 НАСТРОЙКА ПЕРЕВОДА 🔹
     ENABLE_TRANSLATION = False
@@ -25,10 +31,11 @@ class Config:
     RETRY_DELAY = 5
 
     # 🔹 Ограничение записей (0 или None = все) 🔹
-    MAX_CAPEC_RECORDS = 1000
-    MAX_CWE_RECORDS = 1000
-    MAX_CVE_RECORDS = 4000
-    MAX_ATTACK_RECORDS = 1000
+    # Для интеграции нужна полная база: усечённая ломает цепочки CVE->CWE->CAPEC->ATT&CK
+    MAX_CAPEC_RECORDS = 0
+    MAX_CWE_RECORDS = 0
+    MAX_CVE_RECORDS = 0
+    MAX_ATTACK_RECORDS = 0
 
     # 🔹 АВТОЗАПОЛНЕНИЕ ПУСТЫХ ПОЛЕЙ (step4_autofill.py) 🔹
     # Шаблонные фразы для полей, которые не удалось восстановить из первоисточников.
