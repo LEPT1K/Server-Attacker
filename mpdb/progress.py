@@ -69,7 +69,7 @@ def parse_event(line: str):
         return None
     try:
         data = json.loads(line[len(EVENT_PREFIX):])
-        if isinstance(data, dict) и "level" in data:
+        if isinstance(data, dict) and "level" in data:
             return data
     except (json.JSONDecodeError, ValueError):
         pass
