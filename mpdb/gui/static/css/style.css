@@ -1,0 +1,708 @@
+/* ==================== Переменные темы ==================== */
+:root {
+    --mpdb-bg: #f4f6f9;
+    --mpdb-card-shadow: 0 2px 14px rgba(0, 0, 0, 0.06);
+    --mpdb-card-shadow-hover: 0 14px 30px rgba(0, 0, 0, 0.12);
+    --mpdb-accent: #0d6efd;
+}
+
+[data-bs-theme="dark"] {
+    --mpdb-bg: #11151c;
+    --mpdb-card-shadow: 0 2px 14px rgba(0, 0, 0, 0.4);
+    --mpdb-card-shadow-hover: 0 14px 30px rgba(0, 0, 0, 0.6);
+}
+
+/* Плавный переход между темами */
+body, .card, .navbar, .modal-content, .table, .form-control, .form-select,
+.dropdown-menu, .toast, .progress, input, textarea, select, .badge, .list-group-item {
+    transition: background-color 0.25s ease, color 0.25s ease, border-color 0.25s ease, box-shadow 0.25s ease;
+}
+
+/* Основной стиль */
+body {
+    background-color: var(--mpdb-bg);
+    font-family: 'Inter', 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+}
+
+/* Навигация */
+.navbar-brand {
+    font-weight: bold;
+    font-size: 1.3rem;
+}
+
+.navbar {
+    transition: box-shadow 0.3s ease;
+    z-index: 1030;
+}
+
+.navbar.scrolled {
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.25);
+}
+
+.nav-link {
+    position: relative;
+}
+
+/* Полоска при наведении рисуется через ::before, потому что ::after
+   уже занят стрелкой выпадающего меню Bootstrap (.dropdown-toggle::after) */
+.nav-link::before {
+    content: '';
+    position: absolute;
+    left: 1rem;
+    right: 1rem;
+    bottom: 0;
+    height: 2px;
+    background: var(--mpdb-accent);
+    transform: scaleX(0);
+    transform-origin: center;
+    transition: transform 0.25s ease;
+}
+
+.nav-link:hover::before,
+.nav-link.active::before {
+    transform: scaleX(1);
+}
+
+/* Переключатель темы */
+.theme-toggle-btn {
+    width: 38px;
+    height: 38px;
+    border-radius: 50%;
+    border: 1px solid rgba(255, 255, 255, 0.25);
+    background: rgba(255, 255, 255, 0.08);
+    color: #fff;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 1.05rem;
+    cursor: pointer;
+    transition: background-color 0.25s ease, transform 0.4s ease, color 0.25s ease;
+}
+
+.theme-toggle-btn:hover {
+    background: rgba(255, 255, 255, 0.2);
+    transform: rotate(20deg) scale(1.1);
+}
+
+.theme-toggle-btn.spin i {
+    animation: themeSpin 0.4s ease;
+}
+
+@keyframes themeSpin {
+    from { transform: rotate(0deg) scale(0.6); opacity: 0.3; }
+    to { transform: rotate(360deg) scale(1); opacity: 1; }
+}
+
+/* Страницы */
+.page {
+    display: none;
+}
+
+.page.active {
+    display: block;
+    animation: pageFadeIn 0.45s ease;
+}
+
+@keyframes pageFadeIn {
+    from {
+        opacity: 0;
+        transform: translateY(12px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Карточки */
+.card {
+    border-radius: 10px;
+    box-shadow: var(--mpdb-card-shadow);
+    transition: transform 0.25s ease, box-shadow 0.25s ease, background-color 0.25s ease, border-color 0.25s ease;
+}
+
+.card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--mpdb-card-shadow-hover);
+}
+
+/* Лёгкая анимация иконок в заголовках карточек на главной */
+#homePage .card-header i {
+    display: inline-block;
+    animation: iconFloat 3s ease-in-out infinite;
+}
+
+@keyframes iconFloat {
+    0%, 100% { transform: translateY(0); }
+    50% { transform: translateY(-3px); }
+}
+
+/* Прогресс бары */
+.progress {
+    border-radius: 10px;
+    overflow: hidden;
+    background-color: var(--bs-tertiary-bg, #e9ecef);
+}
+
+.progress-bar {
+    transition: width 0.4s ease;
+}
+
+.progress-bar.progress-bar-animated {
+    box-shadow: 0 0 8px rgba(13, 110, 253, 0.5);
+}
+
+/* Логи */
+.log-container {
+    max-height: 400px;
+    overflow-y: auto;
+    background-color: #1e1e1e;
+    color: #d4d4d4;
+    padding: 15px;
+    border-radius: 5px;
+    font-family: 'Consolas', 'Courier New', monospace;
+    font-size: 0.9rem;
+    transition: max-height 0.3s ease;
+}
+
+.log-container.expanded {
+    max-height: 75vh;
+}
+
+.log-entry {
+    padding: 3px 0;
+    border-bottom: 1px solid #333;
+    word-wrap: break-word;
+}
+
+.log-entry.info {
+    color: #4fc3f7;
+}
+
+.log-entry.success {
+    color: #81c784;
+    font-weight: 500;
+}
+
+.log-entry.warning {
+    color: #ffb74d;
+}
+
+.log-entry.error {
+    color: #e57373;
+    font-weight: 500;
+}
+
+/* Выделение важных сообщений */
+.log-entry:contains('✅') {
+    color: #81c784;
+}
+
+.log-entry:contains('❌') {
+    color: #e57373;
+}
+
+.log-entry:contains('⚠️') {
+    color: #ffb74d;
+}
+
+/* Таблицы */
+.table {
+    font-size: 0.9rem;
+}
+
+.table th {
+    font-weight: 600;
+    background-color: var(--bs-tertiary-bg);
+}
+
+.table td {
+    vertical-align: middle;
+}
+
+.table tbody tr {
+    transition: background-color 0.15s ease;
+}
+
+/* Кнопки */
+.btn {
+    transition: transform 0.15s ease, box-shadow 0.15s ease, background-color 0.2s ease, border-color 0.2s ease, color 0.2s ease;
+}
+
+.btn:hover:not(:disabled) {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+}
+
+.btn:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+/* Кнопки действий */
+.btn-action {
+    margin-right: 5px;
+}
+
+/* Модальные окна */
+.modal-content {
+    border-radius: 10px;
+    border: none;
+}
+
+.modal-header {
+    border-bottom: 1px solid #dee2e6;
+}
+
+.modal-footer {
+    border-top: 1px solid #dee2e6;
+}
+
+/* Более плавное появление модальных окон */
+.modal.fade .modal-dialog {
+    transform: scale(0.92) translateY(20px);
+    transition: transform 0.3s ease, opacity 0.3s ease;
+}
+
+.modal.show .modal-dialog {
+    transform: scale(1) translateY(0);
+}
+
+/* Анимация выпадающих меню */
+.dropdown-menu {
+    animation: dropdownFade 0.2s ease;
+    transform-origin: top center;
+}
+
+@keyframes dropdownFade {
+    from {
+        opacity: 0;
+        transform: scale(0.95) translateY(-6px);
+    }
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* Формы */
+.form-control, .form-select {
+    border-radius: 5px;
+}
+
+/* Индикатор подключения */
+#connectionStatus .badge {
+    font-size: 0.8rem;
+    padding: 0.5em 0.8em;
+}
+
+/* Анимации */
+@keyframes pulse {
+    0% {
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0.7);
+    }
+    70% {
+        box-shadow: 0 0 0 10px rgba(40, 167, 69, 0);
+    }
+    100% {
+        box-shadow: 0 0 0 0 rgba(40, 167, 69, 0);
+    }
+}
+
+.connected {
+    animation: pulse 2s infinite;
+}
+
+/* Стили для DataTables */
+.dataTables_wrapper .dataTables_paginate .paginate_button {
+    padding: 0.5em 1em;
+    margin: 0 2px;
+    border-radius: 5px;
+}
+
+.dataTables_wrapper .dataTables_paginate .paginate_button.current {
+    background: #0d6efd;
+    color: white;
+    border: 1px solid #0d6efd;
+}
+
+/* Адаптивность */
+@media (max-width: 768px) {
+    .card-body {
+        padding: 1rem;
+    }
+    
+    .log-container {
+        max-height: 250px;
+    }
+    
+    .table {
+        font-size: 0.8rem;
+    }
+}
+
+/* Scrollbar стили */
+.log-container::-webkit-scrollbar {
+    width: 8px;
+}
+
+.log-container::-webkit-scrollbar-track {
+    background: #2d2d2d;
+    border-radius: 4px;
+}
+
+.log-container::-webkit-scrollbar-thumb {
+    background: #555;
+    border-radius: 4px;
+}
+
+.log-container::-webkit-scrollbar-thumb:hover {
+    background: #777;
+}
+
+/* Загрузочный спиннер */
+.spinner-border-sm {
+    width: 1rem;
+    height: 1rem;
+    border-width: 0.15em;
+}
+
+/* Tooltip стили */
+.tooltip {
+    font-size: 0.85rem;
+}
+
+/* Уведомления */
+.toast {
+    border-radius: 10px;
+    border: none;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.2);
+    animation: toastSlideIn 0.35s ease;
+}
+
+@keyframes toastSlideIn {
+    from {
+        opacity: 0;
+        transform: translateX(40px);
+    }
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+/* Поиск */
+#databaseSearch, #cacheSearch {
+    border-radius: 20px;
+    padding-left: 15px;
+}
+
+/* Пагинация */
+.pagination .page-link {
+    border-radius: 5px;
+    margin: 0 2px;
+    color: #0d6efd;
+}
+
+.pagination .page-item.active .page-link {
+    background-color: #0d6efd;
+    border-color: #0d6efd;
+}
+
+/* Состояния процессов */
+.status-idle {
+    color: #6c757d;
+}
+
+.status-running {
+    color: #0d6efd;
+}
+
+.status-completed {
+    color: #198754;
+}
+
+.status-error {
+    color: #dc3545;
+}
+
+.status-stopped {
+    color: #fd7e14;
+}
+/* Длинные тексты свёрнуты до 3 строк, клик разворачивает (кэш переводов, редактор БД) */
+.expandable-text {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+    cursor: pointer;
+    word-break: break-word;
+    white-space: pre-line;
+}
+
+.expandable-text.expanded {
+    display: block;
+    -webkit-line-clamp: unset;
+    overflow: visible;
+}
+
+/* ==================== Тёмная тема: доп. штрихи ==================== */
+[data-bs-theme="dark"] .log-container {
+    background-color: #0a0d12;
+    border: 1px solid #262b35;
+}
+
+[data-bs-theme="dark"] ::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+}
+
+[data-bs-theme="dark"] ::-webkit-scrollbar-track {
+    background: #1a1f29;
+}
+
+[data-bs-theme="dark"] ::-webkit-scrollbar-thumb {
+    background: #3a4150;
+    border-radius: 5px;
+}
+
+[data-bs-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+    background: #4d5566;
+}
+
+/* ==================== Кнопка "Наверх" ==================== */
+.scroll-top-btn {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    width: 46px;
+    height: 46px;
+    border-radius: 50%;
+    border: none;
+    background: var(--mpdb-accent);
+    color: #fff;
+    font-size: 1.2rem;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.25);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(20px);
+    transition: opacity 0.3s ease, transform 0.3s ease, background-color 0.2s ease;
+    z-index: 1040;
+}
+
+.scroll-top-btn.visible {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.scroll-top-btn:hover {
+    background: #0b5ed7;
+    transform: translateY(-3px);
+}
+
+/* ==================== Загрузка таблиц ==================== */
+.loading-spinner-inline {
+    display: inline-block;
+    width: 2.25rem;
+    height: 2.25rem;
+    border: 3px solid var(--mpdb-accent);
+    border-right-color: transparent;
+    border-radius: 50%;
+    animation: spin 0.7s linear infinite;
+}
+
+@keyframes spin {
+    to { transform: rotate(360deg); }
+}
+
+/* ==================== Новостная лента обновлений ==================== */
+.updates-list {
+    animation: fadeInUp 0.4s ease;
+}
+
+.updates-list .card {
+    transition: all 0.3s ease;
+    border-left: 4px solid;
+}
+
+.updates-list .card:hover {
+    box-shadow: var(--mpdb-card-shadow-hover);
+    transform: translateY(-2px);
+}
+
+.updates-list .card.border-success {
+    border-left-color: #198754;
+}
+
+.updates-list .card.border-warning {
+    border-left-color: #ffc107;
+}
+
+.updates-list .card.border-danger {
+    border-left-color: #dc3545;
+}
+
+.source-details .list-unstyled li {
+    padding: 0.5rem 0;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.source-details .list-unstyled li:last-child {
+    border-bottom: none;
+}
+
+[data-bs-theme="dark"] .source-details .list-unstyled li {
+    border-bottom-color: rgba(255, 255, 255, 0.1);
+}
+
+.btn-outline-primary:hover, .btn-outline-secondary:hover {
+    transition: all 0.2s ease;
+}
+
+/* Анимация загрузки */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* ==================== Визуализация связывания ==================== */
+.link-flow-diagram {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem;
+    justify-content: center;
+    margin-bottom: 0.5rem;
+}
+
+.link-flow-box {
+    flex: 1 1 150px;
+    max-width: 200px;
+    border: 2px solid;
+    border-radius: 0.5rem;
+    text-align: center;
+    padding: 1rem;
+    background: var(--mpdb-card-bg, transparent);
+}
+
+.link-flow-box-title {
+    font-weight: 600;
+    margin-bottom: 0.25rem;
+}
+
+.link-flow-box-count {
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+.link-flow-box-label {
+    font-size: 0.8rem;
+    color: var(--bs-secondary-color);
+}
+
+.link-edge-row {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+}
+
+.link-edge-label {
+    flex: 0 0 auto;
+    min-width: 220px;
+    font-size: 0.875rem;
+}
+
+.link-edge-bar-wrap {
+    flex: 1 1 auto;
+    background: rgba(127, 127, 127, 0.15);
+    border-radius: 0.25rem;
+    height: 0.6rem;
+    overflow: hidden;
+}
+
+.link-edge-bar {
+    height: 100%;
+    border-radius: 0.25rem;
+    transition: width 0.4s ease;
+}
+
+.link-edge-count {
+    flex: 0 0 auto;
+    min-width: 4.5rem;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+    font-size: 0.875rem;
+}
+
+.link-graph-network {
+    width: 100%;
+    height: 420px;
+    border: 1px solid rgba(127, 127, 127, 0.2);
+    border-radius: 0.375rem;
+}
+
+#linkGraphNodeDetails {
+    max-height: 320px;
+    overflow-y: auto;
+}
+
+#linkGraphSearchResults {
+    max-height: 220px;
+    overflow-y: auto;
+    z-index: 5;
+}
+
+#pathFromResults,
+#pathToResults {
+    max-height: 220px;
+    overflow-y: auto;
+    z-index: 1000;
+}
+
+.path-chain {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.path-chain-node {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    text-align: center;
+    min-width: 120px;
+    max-width: 160px;
+    padding: 0.5rem 0.75rem;
+    border: 2px solid;
+    border-radius: 0.5rem;
+    background: var(--mpdb-card-bg, transparent);
+    color: inherit;
+    text-decoration: none;
+}
+
+.path-chain-node:hover {
+    background: rgba(127, 127, 127, 0.1);
+}
+
+.path-chain-node-id {
+    font-weight: 600;
+    word-break: break-all;
+}
+
+.path-chain-edge {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    flex: 0 0 auto;
+    padding: 0 0.25rem;
+}
