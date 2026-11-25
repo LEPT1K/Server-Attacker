@@ -235,3 +235,4 @@ class CrossLinker:
             return True
         except Exception as e:
             print(f"❌ Ошибка сохранения: {e}")
+            return False
