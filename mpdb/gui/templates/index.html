@@ -1,0 +1,940 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MPDB — MITRE Parser Databases</title>
+
+    <!-- Применяем сохранённую тему до отрисовки страницы, чтобы избежать мигания -->
+    <script>
+        (function () {
+            var theme = localStorage.getItem('mpdb-theme') || 'light';
+            document.documentElement.setAttribute('data-bs-theme', theme);
+        })();
+    </script>
+
+    <!-- Шрифт Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+
+    <!-- Bootstrap CSS -->
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <!-- Bootstrap Icons -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css">
+    <!-- DataTables CSS -->
+    <link rel="stylesheet" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+    <!-- Custom CSS -->
+    <link href="{{ url_for('static', filename='css/style.css') }}" rel="stylesheet">
+</head>
+<body>
+    <!-- Навигация -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark sticky-top" id="mainNavbar">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="#">
+                <i class="bi bi-database-fill-gear"></i> MPDB <small class="text-muted d-none d-lg-inline">MITRE Parser Databases</small>
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <!-- РАЗДЕЛ "ГЛАВНАЯ" (первый) -->
+                    <li class="nav-item">
+                        <a class="nav-link active" href="#" data-page="home">
+                            <i class="bi bi-house-door"></i> Главная
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-page="dashboard">
+                            <i class="bi bi-speedometer2"></i> Панель управления
+                        </a>
+                    </li>
+                    <li class="nav-item dropdown">
+                        <a class="nav-link dropdown-toggle" href="#" id="databasesDropdown" role="button" data-bs-toggle="dropdown">
+                            <i class="bi bi-hdd-stack"></i> Базы данных
+                        </a>
+                        <ul class="dropdown-menu">
+                            <li><a class="dropdown-item" href="#" data-db="capec_database">CAPEC</a></li>
+                            <li><a class="dropdown-item" href="#" data-db="cwe_database">CWE</a></li>
+                            <li><a class="dropdown-item" href="#" data-db="cve_database">CVE</a></li>
+                            <li><a class="dropdown-item" href="#" data-db="mitre_attack">MITRE ATT&CK</a></li>
+                        </ul>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-page="linking">
+                            <i class="bi bi-diagram-3"></i> Связи
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-page="translate-cache">
+                            <i class="bi bi-translate"></i> Кэш переводов
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link" href="#" data-page="settings">
+                            <i class="bi bi-gear-fill"></i> Настройки
+                        </a>
+                    </li>
+                </ul>
+                <div class="d-flex align-items-center">
+                    <button class="theme-toggle-btn me-3" id="themeToggle" type="button" title="Переключить тему оформления">
+                        <i class="bi bi-moon-stars-fill" id="themeIcon"></i>
+                    </button>
+                    <span class="navbar-text me-3" id="connectionStatus">
+                        <span class="badge bg-secondary">Отключено</span>
+                    </span>
+                </div>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Основной контент -->
+    <div class="container-fluid mt-4">
+        <!-- ================= НОВАЯ СТРАНИЦА "ГЛАВНАЯ" ================= -->
+        <div id="homePage" class="page active">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h4><i class="bi bi-info-circle"></i> Что такое MITRE?</h4>
+                        </div>
+                        <div class="card-body">
+                            <p>MITRE Corporation — американская некоммерческая организация, которая управляет несколькими ключевыми базами данных в области кибербезопасности. Эти базы используются по всему миру для классификации уязвимостей, шаблонов атак и поведения злоумышленников.</p>
+                            <p>Ваш парсер объединяет четыре основные базы MITRE, обеспечивая перекрёстные ссылки и обогащение данных. Ниже представлены детали каждой базы.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4">
+                <!-- CAPEC -->
+                <div class="col-md-6 col-lg-3 mb-4">
+                    <div class="card h-100 border-primary">
+                        <div class="card-header bg-primary text-white">
+                            <h5><i class="bi bi-shield-lock"></i> CAPEC</h5>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">Common Attack Pattern Enumeration and Classification</h6>
+                            <p class="card-text">Каталог шаблонов атак — описывает, как злоумышленники осуществляют атаки на программное обеспечение.</p>
+                            <ul>
+                                <li><strong>Цель:</strong> Помочь разработчикам понять и предотвратить типовые атаки.</li>
+                                <li><strong>Примеры:</strong> SQL-инъекции, обход аутентификации, сниффинг.</li>
+                                <li><strong>Связано с:</strong> CWE (причины уязвимостей).</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <!-- CWE -->
+                <div class="col-md-6 col-lg-3 mb-4">
+                    <div class="card h-100 border-warning">
+                        <div class="card-header bg-warning text-dark">
+                            <h5><i class="bi bi-bug"></i> CWE</h5>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">Common Weakness Enumeration</h6>
+                            <p class="card-text">Список типов уязвимостей программного обеспечения.</p>
+                            <ul>
+                                <li><strong>Цель:</strong> Стандартизировать описание слабых мест в коде.</li>
+                                <li><strong>Примеры:</strong> Переполнение буфера, неверная проверка ввода.</li>
+                                <li><strong>Связано с:</strong> CAPEC (как атака использует слабость) и CVE (конкретные экземпляры).</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <!-- CVE -->
+                <div class="col-md-6 col-lg-3 mb-4">
+                    <div class="card h-100 border-success">
+                        <div class="card-header bg-success text-white">
+                            <h5><i class="bi bi-database-exclamation"></i> CVE</h5>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">Common Vulnerabilities and Exposures</h6>
+                            <p class="card-text">Словарь известных уязвимостей в конкретных продуктах.</p>
+                            <ul>
+                                <li><strong>Цель:</strong> Уникальные идентификаторы для каждой известной уязвимости.</li>
+                                <li><strong>Пример:</strong> CVE-2024-12345 — уязвимость в библиотеке X.</li>
+                                <li><strong>Связано с:</strong> CWE (тип уязвимости) и CAPEC (способ атаки).</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+                <!-- MITRE ATT&CK -->
+                <div class="col-md-6 col-lg-3 mb-4">
+                    <div class="card h-100 border-danger">
+                        <div class="card-header bg-danger text-white">
+                            <h5><i class="bi bi-graph-up"></i> MITRE ATT&CK</h5>
+                        </div>
+                        <div class="card-body">
+                            <h6 class="card-subtitle mb-2 text-muted">Adversarial Tactics, Techniques & Common Knowledge</h6>
+                            <p class="card-text">База тактик, техник и процедур, используемых злоумышленниками на всех этапах атаки.</p>
+                            <ul>
+                                <li><strong>Цель:</strong> Моделирование поведения атакующих.</li>
+                                <li><strong>Тактики:</strong> Разведка, закрепление, кража данных и др.</li>
+                                <li><strong>Связано с:</strong> CVE (уязвимости могут соответствовать техникам ATT&CK).</li>
+                            </ul>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-2">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="bi bi-link-45deg"></i> Как базы связаны между собой?</h5>
+                        </div>
+                        <div class="card-body">
+                            <p>Ваш парсер автоматически строит перекрёстные ссылки, чтобы вы могли видеть полную картину:</p>
+                            <ul>
+                                <li><strong>CWE → CAPEC:</strong> какие атаки могут использовать данную уязвимость.</li>
+                                <li><strong>CVE → CWE:</strong> к какому типу относится конкретная уязвимость.</li>
+                                <li><strong>CVE → MITRE ATT&CK:</strong> какие техники атак связаны с уязвимостью.</li>
+                                <li><strong>CAPEC → CWE:</strong> какие слабости эксплуатирует атака.</li>
+                            </ul>
+                            <p>Используйте процессы <strong>«Связывание»</strong> и <strong>«Автозаполнение»</strong> на панели управления, чтобы получить максимум информации.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= НОВОСТНАЯ ЛЕНТА ОБНОВЛЕНИЙ ================= -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-info text-white d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="bi bi-newspaper"></i> Лента обновлений MITRE баз</h5>
+                            <button class="btn btn-sm btn-outline-light" id="refreshUpdatesBtn" onclick="refreshUpdates()" title="Проверить обновления">
+                                <i class="bi bi-arrow-clockwise"></i> Проверить
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <div id="updatesLoading" class="text-center py-4">
+                                <div class="spinner-border text-info" role="status">
+                                    <span class="visually-hidden">Загрузка...</span>
+                                </div>
+                                <p class="mt-2 text-muted">Загрузка информации об обновлениях...</p>
+                            </div>
+                            <div id="updatesList" style="display: none;">
+                                <!-- Обновления будут вставлены здесь -->
+                            </div>
+                            <div id="updatesError" style="display: none;" class="alert alert-danger">
+                                <!-- Ошибки будут вставлены здесь -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= ЖУРНАЛ ИЗМЕНЕНИЙ (CHANGELOG) ================= -->
+            <div class="row mt-4">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="bi bi-clock-history"></i> Журнал изменений баз (дельта-обновления)</h5>
+                            <small class="text-muted">Что изменилось между прогонами парсера</small>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted small mb-3">После каждого парсинга фиксируется, сколько записей добавилось и удалилось в каждой базе. Журнал помогает отследить новые CVE и изменения в составе баз.</p>
+                            <div id="changelogList">
+                                <!-- Записи журнала вставляются JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- ================= МОДАЛЬНОЕ ОКНО ДЕТАЛЕЙ ИСТОЧНИКА ================= -->
+            <div class="modal fade" id="sourceDetailsModal" tabindex="-1">
+                <div class="modal-dialog modal-lg">
+                    <div class="modal-content">
+                        <div class="modal-header">
+                            <h5 class="modal-title" id="sourceDetailsTitle">Детали источника</h5>
+                            <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        </div>
+                        <div class="modal-body" id="sourceDetailsBody">
+                            <!-- Содержимое будет заполнено JS -->
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Закрыть</button>
+                            <a class="btn btn-primary" id="openSourceButton" href="#" target="_blank" rel="noopener">
+                                <i class="bi bi-box-arrow-up-right"></i> Открыть источник
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ================= СТРАНИЦА "СВЯЗИ" (визуализация связывания) ================= -->
+        <div id="linkingPage" class="page">
+            <div class="row">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header bg-primary text-white">
+                            <h4><i class="bi bi-diagram-3"></i> Связи между базами</h4>
+                        </div>
+                        <div class="card-body">
+                            <p>Шаг <strong>«Связывание»</strong> устанавливает перекрёстные ссылки между записями CAPEC, CWE, CVE и MITRE ATT&CK. Здесь показано, сколько связей найдено между базами и как устроены связи конкретной записи.</p>
+                            <div id="linkingLoading" class="text-center py-4">
+                                <div class="spinner-border text-primary" role="status">
+                                    <span class="visually-hidden">Загрузка...</span>
+                                </div>
+                                <p class="mt-2 text-muted">Загрузка статистики связей...</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Обзорная диаграмма: базы и связи между ними -->
+            <div class="row mt-4" id="linkingOverview" style="display: none;">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="bi bi-bounding-box-circles"></i> Обзор связей между базами</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="link-flow-diagram" id="linkFlowBoxes">
+                                <!-- Карточки баз вставляются JS -->
+                            </div>
+                            <hr>
+                            <h6 class="text-muted">Связи между базами</h6>
+                            <div id="linkFlowEdges">
+                                <!-- Список связей вставляется JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Покрытие связей (gap-analysis) -->
+            <div class="row mt-4" id="linkingCoverage" style="display: none;">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="bi bi-diagram-3"></i> Покрытие связей (gap-analysis)</h5>
+                            <small class="text-muted">Какой % записей дотянут до смежных баз</small>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted small mb-3">Показывает «пробелы» в связях: сколько записей каждой базы реально связаны со смежными, сколько вообще без перекрёстных связей (orphans), и насколько полно прослеживается цепочка <strong>CVE → CWE → CAPEC → ATT&amp;CK</strong>.</p>
+                            <div id="coverageChain" class="mb-3"></div>
+                            <div id="coverageTables"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Поиск пути между записями -->
+            <div class="row mt-4" id="linkingPathSection" style="display: none;">
+                <div class="col-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5 class="mb-0"><i class="bi bi-signpost-split"></i> Путь между записями</h5>
+                            <button class="btn btn-sm btn-outline-secondary" type="button" data-bs-toggle="collapse" data-bs-target="#pathHelpCollapse" title="Как это работает?">
+                                <i class="bi bi-question-circle"></i> Как это работает?
+                            </button>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted small mb-2">Найдите цепочку перекрёстных связей между двумя записями — например, между конкретной CVE и техникой ATT&CK, чтобы понять, через какие CWE и CAPEC они связаны.</p>
+                            <div class="collapse mb-3" id="pathHelpCollapse">
+                                <div class="alert alert-info small mb-0">
+                                    <p class="mb-2"><strong>Зачем нужна эта функция:</strong> базы CAPEC, CWE, CVE и ATT&CK редко связаны напрямую — обычно между ними цепочка из нескольких шагов (например, CVE → CWE → CAPEC → ATT&CK). Поиск пути строит эту цепочку автоматически, что удобно для анализа угроз: по уязвимости понять, какими шаблонами атак и техниками противника она может быть использована, и наоборот.</p>
+                                    <p class="mb-2"><strong>Как пользоваться:</strong></p>
+                                    <ol class="mb-2">
+                                        <li>Введите id или название записи в поле «Откуда» (например, <code>CVE-2021-44228</code>, <code>CAPEC-66</code>, <code>CWE-89</code> или <code>T1059</code>) и выберите вариант из выпадающего списка.</li>
+                                        <li>То же самое для поля «Куда».</li>
+                                        <li>Нажмите кнопку поиска — ниже появится цепочка записей и связей между ними.</li>
+                                    </ol>
+                                    <p class="mb-0"><strong>Если путь не найден:</strong> поиск ограничен 6 шагами, а часть записей (особенно техники ATT&CK и некоторые CAPEC/CWE) в данных MITRE вообще не имеет перекрёстных связей с другими базами — для них путь в принципе не существует, это сообщение покажет явно.</p>
+                                </div>
+                            </div>
+                            <div class="row g-2">
+                                <div class="col-md-5 position-relative">
+                                    <input type="text" class="form-control" id="pathFromInput"
+                                           placeholder="Откуда (например, CVE-2021-44228)" autocomplete="off">
+                                    <div id="pathFromResults" class="list-group position-absolute w-100" style="display: none; z-index: 1000;"></div>
+                                </div>
+                                <div class="col-md-1 text-center pt-2">
+                                    <i class="bi bi-arrow-right fs-4 text-muted"></i>
+                                </div>
+                                <div class="col-md-5 position-relative">
+                                    <input type="text" class="form-control" id="pathToInput"
+                                           placeholder="Куда (например, T1059)" autocomplete="off">
+                                    <div id="pathToResults" class="list-group position-absolute w-100" style="display: none; z-index: 1000;"></div>
+                                </div>
+                                <div class="col-md-1">
+                                    <button class="btn btn-primary w-100" id="pathFindBtn" onclick="findLinkPath();" title="Найти путь">
+                                        <i class="bi bi-search"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div id="pathResult" class="mt-3"></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4" id="linkingDetails" style="display: none;">
+                <!-- Топ цитируемых записей -->
+                <div class="col-lg-4 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5><i class="bi bi-star"></i> Часто цитируемые записи</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted small">Записи, на которые чаще всего ссылаются другие базы. Нажмите, чтобы посмотреть граф связей.</p>
+                            <div id="topReferencedList" class="list-group">
+                                <!-- Вставляется JS -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Граф связей конкретной записи -->
+                <div class="col-lg-8 mb-4">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5><i class="bi bi-share"></i> Граф связей записи</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="input-group mb-3">
+                                <span class="input-group-text"><i class="bi bi-search"></i></span>
+                                <input type="text" class="form-control" id="linkGraphSearchInput"
+                                       placeholder="Введите ID или название (например, CAPEC-66, CWE-89, T1059, CVE-2021-44228)" autocomplete="off">
+                                <select class="form-select" id="linkGraphDepthSelect" style="max-width: 130px;" title="Глубина графа">
+                                    <option value="1" selected>1 шаг</option>
+                                    <option value="2">2 шага</option>
+                                    <option value="3">3 шага</option>
+                                </select>
+                            </div>
+                            <div id="linkGraphSearchResults" class="list-group mb-3" style="display: none;"></div>
+
+                            <div id="linkGraphPlaceholder" class="text-center text-muted py-5">
+                                <i class="bi bi-diagram-2" style="font-size: 2.5rem;"></i>
+                                <p class="mt-2">Выберите запись слева или воспользуйтесь поиском, чтобы увидеть граф связей</p>
+                            </div>
+
+                            <div id="linkGraphContainer" style="display: none;">
+                                <div class="d-flex justify-content-between align-items-center mb-2">
+                                    <h6 class="mb-0" id="linkGraphTitle"></h6>
+                                    <span class="badge bg-secondary" id="linkGraphLegendInfo"></span>
+                                </div>
+                                <div id="linkGraphNetwork" class="link-graph-network"></div>
+                                <div id="linkGraphTruncatedNote" class="text-muted small mt-2"></div>
+
+                                <div id="linkGraphNodeDetails" class="card mt-3" style="display: none;">
+                                    <div class="card-body">
+                                        <div class="d-flex justify-content-between align-items-start mb-2">
+                                            <h6 class="mb-0" id="linkGraphNodeDetailsTitle"></h6>
+                                            <div>
+                                                <button type="button" class="btn btn-sm btn-outline-primary" id="linkGraphNodeDetailsOpenBtn" title="Открыть запись в редакторе базы данных">
+                                                    <i class="bi bi-box-arrow-up-right"></i> В базе данных
+                                                </button>
+                                                <button type="button" class="btn btn-sm btn-outline-secondary" onclick="$('#linkGraphNodeDetails').hide();" title="Закрыть">
+                                                    <i class="bi bi-x-lg"></i>
+                                                </button>
+                                            </div>
+                                        </div>
+                                        <div id="linkGraphNodeDetailsBody" class="small"></div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row mt-4" id="linkingError" style="display: none;">
+                <div class="col-12">
+                    <div class="alert alert-danger" id="linkingErrorMessage"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Панель управления (теперь без класса active) -->
+        <div id="dashboardPage" class="page">
+            <!-- ... весь существующий код панели управления ... -->
+            <div class="row">
+                <!-- Карточки статистики -->
+                <div class="col-md-3 mb-4">
+                    <div class="card bg-primary text-white h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="bi bi-database"></i> Базы данных
+                            </h5>
+                            <h2 id="totalDatabases">0</h2>
+                            <p class="card-text">Активных баз</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="card bg-success text-white h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="bi bi-file-earmark-text"></i> Записи
+                            </h5>
+                            <h2 id="totalRecords">0</h2>
+                            <p class="card-text">Всего записей</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="card bg-info text-white h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="bi bi-translate"></i> Переводы
+                            </h5>
+                            <h2 id="totalTranslations">0</h2>
+                            <p class="card-text">В кэше</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-3 mb-4">
+                    <div class="card bg-warning text-dark h-100">
+                        <div class="card-body">
+                            <h5 class="card-title">
+                                <i class="bi bi-link-45deg"></i> Связи
+                            </h5>
+                            <h2 id="totalLinks">0</h2>
+                            <p class="card-text">Перекрестных ссылок</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Панель процессов -->
+            <div class="row">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="bi bi-play-circle"></i> Управление процессами</h5>
+                        </div>
+                        <div class="card-body">
+                            <div class="row">
+                                <!-- Парсинг -->
+                                <div class="col-md-4 col-lg mb-3">
+                                    <div class="card h-100 border-primary">
+                                        <div class="card-body">
+                                            <h6 class="card-title">
+                                                <i class="bi bi-download"></i> Парсинг
+                                            </h6>
+                                            <p class="card-text small">Скачивание и обработка баз данных</p>
+                                            <div class="progress mb-2" style="height: 20px;">
+                                                <div id="parsingProgress" class="progress-bar progress-bar-striped progress-bar-animated" role="progressbar" style="width: 0%">0%</div>
+                                            </div>
+                                            <div class="btn-group w-100">
+                                                <button class="btn btn-sm btn-primary" onclick="startProcess('parsing')">
+                                                    <i class="bi bi-play"></i> Старт
+                                                </button>
+                                                <button class="btn btn-sm btn-danger" onclick="stopProcess('parsing')">
+                                                    <i class="bi bi-stop"></i> Стоп
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Связывание -->
+                                <div class="col-md-4 col-lg mb-3">
+                                    <div class="card h-100 border-success">
+                                        <div class="card-body">
+                                            <h6 class="card-title">
+                                                <i class="bi bi-link-45deg"></i> Связывание
+                                            </h6>
+                                            <p class="card-text small">Установление перекрестных ссылок</p>
+                                            <div class="progress mb-2" style="height: 20px;">
+                                                <div id="linkingProgress" class="progress-bar progress-bar-striped progress-bar-animated bg-success" role="progressbar" style="width: 0%">0%</div>
+                                            </div>
+                                            <div class="btn-group w-100">
+                                                <button class="btn btn-sm btn-success" onclick="startProcess('linking')">
+                                                    <i class="bi bi-play"></i> Старт
+                                                </button>
+                                                <button class="btn btn-sm btn-danger" onclick="stopProcess('linking')">
+                                                    <i class="bi bi-stop"></i> Стоп
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Автозаполнение -->
+                                <div class="col-md-4 col-lg mb-3">
+                                    <div class="card h-100 border-secondary">
+                                        <div class="card-body">
+                                            <h6 class="card-title">
+                                                <i class="bi bi-magic"></i> Автозаполнение
+                                            </h6>
+                                            <p class="card-text small">Заполнение пустых полей (связи/факты/шаблоны). Доступно после перевода.</p>
+                                            <div class="progress mb-2" style="height: 20px;">
+                                                <div id="autofillingProgress" class="progress-bar progress-bar-striped progress-bar-animated bg-secondary" role="progressbar" style="width: 0%">0%</div>
+                                            </div>
+                                            <div class="btn-group w-100">
+                                                <button id="autofillStartBtn" class="btn btn-sm btn-secondary" onclick="startProcess('autofilling')" disabled title="Сначала выполните «Перевод»">
+                                                    <i class="bi bi-play"></i> Старт
+                                                </button>
+                                                <button class="btn btn-sm btn-danger" onclick="stopProcess('autofilling')">
+                                                    <i class="bi bi-stop"></i> Стоп
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <!-- Перевод -->
+                                <div class="col-md-4 col-lg mb-3">
+                                    <div class="card h-100 border-warning">
+                                        <div class="card-body">
+                                            <h6 class="card-title">
+                                                <i class="bi bi-translate"></i> Перевод
+                                            </h6>
+                                            <p class="card-text small">Перевод полей на русский</p>
+                                            <div class="progress mb-2" style="height: 20px;">
+                                                <div id="translatingProgress" class="progress-bar progress-bar-striped progress-bar-animated bg-warning" role="progressbar" style="width: 0%">0%</div>
+                                            </div>
+                                            <div class="btn-group w-100">
+                                                <button class="btn btn-sm btn-warning" onclick="startProcess('translating')">
+                                                    <i class="bi bi-play"></i> Старт
+                                                </button>
+                                                <button class="btn btn-sm btn-danger" onclick="stopProcess('translating')">
+                                                    <i class="bi bi-stop"></i> Стоп
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Сводный отчёт и выход в локальную папку с данными -->
+            <div class="row mt-4">
+                <div class="col-md-6 mb-4 mb-md-0">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5><i class="bi bi-file-earmark-pdf"></i> Отчёты</h5>
+                        </div>
+                        <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <p class="mb-0 text-muted">Сводный PDF-отчёт по всем базам данных: статистика, перекрёстные связи и графики.</p>
+                            <a class="btn btn-outline-danger" href="/api/export/report/pdf">
+                                <i class="bi bi-file-earmark-pdf"></i> Скачать PDF-отчёт
+                            </a>
+                        </div>
+                    </div>
+                </div>
+                <div class="col-md-6">
+                    <div class="card h-100">
+                        <div class="card-header">
+                            <h5><i class="bi bi-folder2-open"></i> Локальные файлы</h5>
+                        </div>
+                        <div class="card-body d-flex align-items-center justify-content-between flex-wrap gap-2">
+                            <p class="mb-0 text-muted">Открыть папку <code>output/</code> с JSON-базами на этом компьютере.</p>
+                            <button class="btn btn-outline-primary" onclick="openOutputFolder()">
+                                <i class="bi bi-folder2-open"></i> Открыть папку output
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Логи процессов -->
+            <div class="row mt-4">
+                <div class="col-md-12">
+                    <div class="card">
+                        <div class="card-header d-flex justify-content-between align-items-center">
+                            <h5><i class="bi bi-terminal"></i> Логи процессов</h5>
+                            <div>
+                                <button class="btn btn-sm btn-outline-secondary" id="toggleLogExpandBtn" onclick="toggleLogExpand()" title="Развернуть/свернуть окно логов">
+                                    <i class="bi bi-arrows-angle-expand"></i>
+                                </button>
+                                <button class="btn btn-sm btn-outline-secondary" onclick="clearLogs()">
+                                    <i class="bi bi-trash"></i> Очистить
+                                </button>
+                            </div>
+                        </div>
+                        <div class="card-body">
+                            <div class="log-container" id="processLogs">
+                                <div class="log-entry text-muted">Ожидание событий...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Страница редактора баз данных -->
+        <div id="databasePage" class="page">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5 id="databaseTitle">
+                        <i class="bi bi-table"></i> Редактор базы данных
+                    </h5>
+                    <div>
+                        <div class="btn-group">
+                            <button class="btn btn-sm btn-outline-secondary dropdown-toggle" type="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="bi bi-download"></i> Экспорт
+                            </button>
+                            <ul class="dropdown-menu dropdown-menu-end">
+                                <li><a class="dropdown-item" href="#" onclick="exportDatabase('csv'); return false;"><i class="bi bi-filetype-csv"></i> CSV</a></li>
+                                <li><a class="dropdown-item" href="#" onclick="exportDatabase('xlsx'); return false;"><i class="bi bi-file-earmark-excel"></i> Excel (XLSX)</a></li>
+                            </ul>
+                        </div>
+                        <button class="btn btn-sm btn-outline-primary" onclick="refreshDatabase()">
+                            <i class="bi bi-arrow-clockwise"></i> Обновить
+                        </button>
+                        <button class="btn btn-sm btn-outline-success" onclick="saveDatabase()">
+                            <i class="bi bi-save"></i> Сохранить
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <!-- Поиск и фильтрация -->
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <input type="text" class="form-control" id="databaseSearch" placeholder="Поиск по ID, названию, описанию...">
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="recordsPerPage">
+                                <option value="10">10 записей</option>
+                                <option value="25" selected>25 записей</option>
+                                <option value="50">50 записей</option>
+                                <option value="100">100 записей</option>
+                            </select>
+                        </div>
+                        <div class="col-md-3">
+                            <span class="text-muted" id="recordCount">Записей: 0</span>
+                        </div>
+                    </div>
+
+                    <p class="text-muted small mb-2"><i class="bi bi-info-circle"></i> Длинные тексты свёрнуты — нажмите на ячейку, чтобы развернуть.</p>
+
+                    <!-- Таблица данных -->
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover" id="databaseTable">
+                            <thead>
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Название</th>
+                                    <th>Описание</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody id="databaseTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Пагинация -->
+                    <nav>
+                        <ul class="pagination" id="pagination">
+                        </ul>
+                    </nav>
+                </div>
+            </div>
+        </div>
+
+        <!-- Страница кэша переводов -->
+        <div id="translateCachePage" class="page">
+            <div class="card">
+                <div class="card-header d-flex justify-content-between align-items-center">
+                    <h5><i class="bi bi-translate"></i> Кэш переводов</h5>
+                    <div>
+                        <button class="btn btn-sm btn-outline-danger" onclick="clearTranslateCache()">
+                            <i class="bi bi-trash"></i> Очистить кэш
+                        </button>
+                        <button class="btn btn-sm btn-outline-success" onclick="saveTranslateCache()">
+                            <i class="bi bi-save"></i> Сохранить
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row mb-3">
+                        <div class="col-md-5">
+                            <input type="text" class="form-control" id="cacheSearch" placeholder="Поиск по оригиналу или переводу...">
+                        </div>
+                        <div class="col-md-3">
+                            <select class="form-select" id="cachePerPage">
+                                <option value="25">25 записей</option>
+                                <option value="50" selected>50 записей</option>
+                                <option value="100">100 записей</option>
+                                <option value="250">250 записей</option>
+                            </select>
+                        </div>
+                        <div class="col-md-4 d-flex align-items-center justify-content-end">
+                            <span class="text-muted" id="cacheCount">Записей: 0</span>
+                        </div>
+                    </div>
+
+                    <p class="text-muted small mb-2"><i class="bi bi-info-circle"></i> Длинные тексты свёрнуты — нажмите на ячейку, чтобы развернуть.</p>
+
+                    <div class="table-responsive">
+                        <table class="table table-striped table-hover align-middle" id="cacheTable">
+                            <thead>
+                                <tr>
+                                    <th style="width: 44%">Оригинал (EN)</th>
+                                    <th style="width: 44%">Перевод (RU)</th>
+                                    <th style="width: 12%" class="text-center">Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cacheTableBody">
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Пагинация кэша -->
+                    <nav class="d-flex justify-content-between align-items-center flex-wrap">
+                        <ul class="pagination mb-0" id="cachePagination">
+                        </ul>
+                        <span class="text-muted small" id="cachePageInfo"></span>
+                    </nav>
+                </div>
+            </div>
+        </div>
+
+        <!-- Страница настроек -->
+        <div id="settingsPage" class="page">
+            <div class="row">
+                <!-- Настройки лимитов парсинга -->
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="bi bi-sliders"></i> Лимиты парсинга</h5>
+                        </div>
+                        <div class="card-body">
+                            <p class="text-muted small">Ограничение количества записей при парсинге (0 = все записи)</p>
+                            <form id="limitsSettings">
+                                <div class="mb-3">
+                                    <label class="form-label">CAPEC (шаблоны атак)</label>
+                                    <input type="number" class="form-control" name="max_capec" value="330" min="0">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">CWE (типы уязвимостей)</label>
+                                    <input type="number" class="form-control" name="max_cwe" value="500" min="0">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">CVE (известные уязвимости)</label>
+                                    <input type="number" class="form-control" name="max_cve" value="2000" min="0">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">MITRE ATT&CK (тактики)</label>
+                                    <input type="number" class="form-control" name="max_attack" value="300" min="0">
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-save"></i> Сохранить лимиты
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Настройки перевода -->
+                <div class="col-md-6 mb-4">
+                    <div class="card">
+                        <div class="card-header">
+                            <h5><i class="bi bi-translate"></i> Настройки перевода</h5>
+                        </div>
+                        <div class="card-body">
+                            <form id="translationSettings">
+                                <div class="mb-3">
+                                    <label class="form-label">Сервис перевода</label>
+                                    <select class="form-select" name="service">
+                                        <option value="google">Google Translate</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Целевой язык</label>
+                                    <select class="form-select" name="target_lang">
+                                        <option value="ru">Русский</option>
+                                        <option value="en">English</option>
+                                        <option value="de">Deutsch</option>
+                                        <option value="fr">Français</option>
+                                    </select>
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Параллельных потоков</label>
+                                    <input type="number" class="form-control" name="workers" value="5" min="1">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Задержка перед запросом в потоке (сек)</label>
+                                    <input type="number" class="form-control" name="delay" value="0.4" step="0.1">
+                                </div>
+                                <div class="mb-3">
+                                    <label class="form-label">Макс. попыток</label>
+                                    <input type="number" class="form-control" name="max_retries" value="5">
+                                </div>
+                                <button type="submit" class="btn btn-primary">
+                                    <i class="bi bi-save"></i> Сохранить настройки
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Модальные окна (без изменений) -->
+    <div class="modal fade" id="editRecordModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Редактирование записи</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="editRecordForm">
+                        <input type="hidden" id="editRecordId">
+                        <input type="hidden" id="editDbName">
+                        <div id="editRecordFields"></div>
+                    </form>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" onclick="saveRecord()">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="editTranslationModal" tabindex="-1">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title">Редактирование перевода</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="mb-3">
+                        <label class="form-label">Оригинал</label>
+                        <textarea class="form-control" id="editTranslationOriginal" readonly rows="3"></textarea>
+                    </div>
+                    <div class="mb-3">
+                        <label class="form-label">Перевод</label>
+                        <textarea class="form-control" id="editTranslationText" rows="3"></textarea>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Отмена</button>
+                    <button type="button" class="btn btn-primary" onclick="saveTranslation()">Сохранить</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Кнопка "Наверх" -->
+    <button id="scrollTopBtn" class="scroll-top-btn" title="Наверх" type="button">
+        <i class="bi bi-arrow-up"></i>
+    </button>
+
+    <!-- Скрипты -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.socket.io/4.5.0/socket.io.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://unpkg.com/vis-network@9.1.6/standalone/umd/vis-network.min.js"></script>
+    <script src="{{ url_for('static', filename='js/app.js') }}"></script>
+</body>
+</html>
