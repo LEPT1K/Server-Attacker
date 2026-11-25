@@ -1,0 +1,9 @@
+Flask>=2.3.0
+Flask-SocketIO>=5.3.0
+Flask-CORS>=4.0.0
+python-socketio>=5.10.0
+# eventlet не требуется для async_mode='threading'
+
+# Экспорт отчётов (CSV/XLSX/PDF)
+openpyxl>=3.1.0
+reportlab>=4.0.0
