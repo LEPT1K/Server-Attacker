@@ -69,3 +69,54 @@
 10. **EPSS-фид FIRST**: первая строка — комментарий с версией модели
     (`#model_version:...`), парсер её пропускает; битые строки пропускаются
     (ловятся KeyError/TypeError/ValueError).
+
+### ТЗ для Этапа 2 (`analyzer.py` + `weights.yaml`) — исполнение в Kimi Code
+
+Контракт `mpdb.analyze(payload: dict) -> dict` — единственная точка входа
+комплекса, внутренности (graph.py, analyzer.py) снаружи не импортируются.
+
+Вход:
+
+```json
+{
+  "scan_id": "uuid",
+  "target_context": {"os": "linux", "host_role": "web", "exposed_to_network": true},
+  "findings": [{"cve": "CVE-…", "source": "nmap|trivy|nuclei", "component": "…", "service": "…", "port": 80}]
+}
+```
+
+Выход:
+
+```json
+{
+  "meta": {"mpdb_version": "…", "cache": {"built_at": "…", "age_days": 0.0},
+           "status": "ok|no_cache|stale_cache"},
+  "results": [{"cve": "…", "in_base": true, "epss": 0.0,
+               "chains": [{"steps": [{"id": "…", "db": "…", "name": "…", "via": "…"}],
+                           "completeness": 1.0, "weight": 0.0,
+                           "breakdown": {"cvss_norm": 0.0, "epss": 0.0,
+                                         "completeness": 1.0, "context": 1.0}}]}],
+  "gaps": [{"cve": "…", "reason": "not_in_base"}]
+}
+```
+
+Правила исполнения:
+
+- только быстрый режим: `GraphCache.open()`, без сети и без разбора JSON;
+  `FileNotFoundError` → `status=no_cache`, `results=[]` — отчёт всё равно строится;
+- `is_stale()` → `status=stale_cache`, но анализ выполняется полностью;
+- вес цепочки `W = (a·CVSS_norm + b·EPSS + c·COMPLETENESS) × CONTEXT`;
+  `CVSS_norm = cvss/10`; `COMPLETENESS`: 1.0 — дошли до ATT&CK, 0.5 — до CAPEC,
+  0.25 — только CWE или прямая CVE→ATT&CK; стартовые a=0.4, b=0.3, c=0.3 —
+  всё в `weights.yaml`, правка формулы = правка YAML, код не трогаем;
+- `CONTEXT` — произведение множителей из `weights.yaml` (`exposed_to_network`,
+  совпадение `service`/`port` находки с полями `requires_service`/`requires_port`
+  CVE и т.п.); нет данных — множитель 1.0;
+- `results` сортируются по максимальному весу цепочки; топ-3 помечаются
+  (`"top": true`) для подсветки в отчёте (Этап 3);
+- неизвестная CVE → в `gaps` с причиной, исключений не бросаем;
+- обход цепочек — только через `GraphCache.chains_from_cve()` (Этап 1),
+  свою ходилку не писать;
+- тесты `tests/mpdb/test_analyzer.py` на синтетических снапшотах
+  (по образцу `test_graph.py`), `pytest tests/mpdb` должен остаться зелёным;
+- после правок обновить этот файл: отметить Этап 2 и добавить находки.
